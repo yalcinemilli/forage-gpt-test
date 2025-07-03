@@ -67,6 +67,9 @@ export default function Home() {
 
         client.on('app.registered', async () => {
           console.log('App registriert bei Zendesk');
+
+          client.invoke('resize', { width: '100%', height: '700px' });
+
           try {          const ticketData = await client.get([
             'ticket.id',
             'ticket.subject',
