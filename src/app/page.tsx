@@ -227,17 +227,21 @@ export default function Home() {
       if (zafClient) {
         console.log('Versuche Text in Zendesk Composer einzufügen...');
         try {
-          // Methode 1: Verwende postMessage an Parent Window
-          window.parent.postMessage({
-            type: 'zendesk_composer_insert',
-            text: data.response,
-            source: 'forage_gpt'
-          }, '*');
+          // // Methode 1: Verwende postMessage an Parent Window
+          // window.parent.postMessage({
+          //   type: 'zendesk_composer_insert',
+          //   text: data.response,
+          //   source: 'forage_gpt'
+          // }, '*');
           
-          // Setze Text auch in Zwischenablage als Backup
-          await navigator.clipboard.writeText(data.response);
-          console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
-          setInsertionStatus('message-sent');
+          // // Setze Text auch in Zwischenablage als Backup
+          // await navigator.clipboard.writeText(data.response);
+          // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
+          // setInsertionStatus('message-sent');
+          
+          await zafClient.invoke('comment.insertText', data.response);
+          console.log('Text erfolgreich eingefügt');
+          setInsertionStatus('success');
           
         } catch (zafError) {
           console.error('Fehler beim Senden der Nachricht:', zafError);
