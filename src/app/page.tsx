@@ -62,6 +62,10 @@ export default function Home() {
         const client = window.ZAFClient.init();
         setZafClient(client);
         console.log('ZAF Client initialisiert');
+
+        client.invoke('paths').then((paths) => {
+          console.log('Verfügbare invoke-Pfade:', paths);
+        });
         
         client.on('app.registered', async () => {
           console.log('App registriert bei Zendesk');
