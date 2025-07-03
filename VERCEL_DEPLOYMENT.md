@@ -52,17 +52,43 @@ vercel
 - Überprüfe in den Browser-Entwicklertools auf Fehler
 
 ### Automatische Texteinfügung funktioniert nicht
-- **Wichtig**: Die `composer.text` API funktioniert nur im neuen Agent Workspace, nicht im Classic Interface
-- Die App verwendet automatisch Fallback-Methoden:
-  1. DOM-Manipulation: Sucht nach Composer-Textareas und fügt Text direkt ein
-  2. Zwischenablage: Kopiert Text automatisch, du musst dann Strg+V drücken
-- Verwende den "🧪 Test Einfügung" Button um zu prüfen, welche Methode funktioniert
-- Überprüfe die Browser-Konsole für detaillierte Meldungen
+- **Cross-Origin-Problem**: Die App kann nicht direkt auf Zendesk-DOM zugreifen wegen Sicherheitsrestriktionen
+- **Lösung 1**: Die App sendet PostMessage an das Parent-Window und kopiert Text in Zwischenablage
+- **Lösung 2**: Lade das Auto-Insert-Script in Zendesk:
+  1. Öffne die Browser-Entwicklertools in Zendesk (F12)
+  2. Gehe zur Konsole
+  3. Kopiere den Inhalt von `public/zendesk-auto-insert.js` und füge ihn ein
+  4. Das Script hört automatisch auf PostMessages und fügt Text ein
+- **Lösung 3**: Verwende Strg+V/Cmd+V zum manuellen Einfügen (Text ist automatisch in Zwischenablage)
 
-### Classic vs. New Agent Workspace
-- **Classic Agent Interface**: Automatische Einfügung via DOM-Manipulation oder Zwischenablage
-- **New Agent Workspace**: Direkte API-Unterstützung (falls verfügbar)
-- Die App erkennt automatisch, welche Methode verwendet werden kann
+### Funktionsweise der verschiedenen Methoden
+1. **PostMessage + Auto-Script**: App sendet Nachricht → Script fügt automatisch ein
+2. **Zwischenablage**: App kopiert Text automatisch → Manuelles Einfügen mit Strg+V
+3. **Manueller Kopieren-Button**: Backup-Option zum erneuten Kopieren
+
+### Script-Installation für automatische Einfügung
+```javascript
+// Füge diesen Code in die Zendesk-Konsole ein (F12 → Konsole):
+
+window.addEventListener('message', function(event) {
+  if (event.data.type === 'zendesk_composer_insert' && event.data.text) {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+      if (textarea.placeholder && (
+        textarea.placeholder.includes('Antwort') ||
+        textarea.placeholder.includes('Reply') ||
+        textarea.placeholder.includes('Comment')
+      )) {
+        textarea.value = event.data.text;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        textarea.focus();
+        console.log('✅ Text automatisch eingefügt!');
+      }
+    });
+  }
+});
+console.log('🎯 Auto-Insert Script aktiv');
+```
 
 ### API-Fehler
 - Überprüfe, ob OPENAI_API_KEY korrekt in Vercel gesetzt ist

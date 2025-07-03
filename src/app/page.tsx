@@ -227,65 +227,29 @@ export default function Home() {
       if (zafClient) {
         console.log('Versuche Text in Zendesk Composer einzufügen...');
         try {
-          // Methode 1: Versuche mit textarea (Classic Agent Interface)
-          await zafClient.invoke('instances.create', {
-            location: 'modal',
-            url: 'data:text/html;charset=utf-8,' + encodeURIComponent(`
-              <script>
-                window.parent.postMessage({
-                  type: 'insertText',
-                  text: ${JSON.stringify(data.response)}
-                }, '*');
-                window.close();
-              </script>
-            `)
-          });
+          // Methode 1: Verwende postMessage an Parent Window
+          window.parent.postMessage({
+            type: 'zendesk_composer_insert',
+            text: data.response,
+            source: 'forage_gpt'
+          }, '*');
           
-          // Fallback: Setze Text in Zwischenablage und zeige Hinweis
+          // Setze Text auch in Zwischenablage als Backup
           await navigator.clipboard.writeText(data.response);
-          console.log('Text wurde erfolgreich in Zwischenablage kopiert');
-          setInsertionStatus('clipboard');
+          console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
+          setInsertionStatus('message-sent');
           
         } catch (zafError) {
-          console.error('Fehler beim Einfügen in Zendesk:', zafError);
+          console.error('Fehler beim Senden der Nachricht:', zafError);
           
-          // Methode 2: Versuche direkten Zugriff auf DOM (falls möglich)
+          // Fallback: Nur Zwischenablage
           try {
-            // Suche nach Composer-Textareas im Parent-Window
-            const textareas = window.parent.document.querySelectorAll('textarea');
-            let composerFound = false;
-            
-            textareas.forEach(textarea => {
-              if (textarea.placeholder && 
-                  (textarea.placeholder.includes('Antwort') || 
-                   textarea.placeholder.includes('Reply') ||
-                   textarea.placeholder.includes('Comment'))) {
-                textarea.value = data.response;
-                textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                composerFound = true;
-              }
-            });
-            
-            if (composerFound) {
-              console.log('Text wurde via DOM-Manipulation eingefügt');
-              setInsertionStatus('dom-success');
-            } else {
-              // Fallback: Nur in Zwischenablage kopieren
-              await navigator.clipboard.writeText(data.response);
-              setInsertionStatus('clipboard');
-            }
-            
-          } catch (domError) {
-            console.error('DOM-Manipulation fehlgeschlagen:', domError);
-            
-            // Letzte Option: Nur Zwischenablage
-            try {
-              await navigator.clipboard.writeText(data.response);
-              setInsertionStatus('clipboard');
-            } catch (clipboardError) {
-              console.error('Auch Zwischenablage fehlgeschlagen:', clipboardError);
-              setInsertionStatus('failed');
-            }
+            await navigator.clipboard.writeText(data.response);
+            setInsertionStatus('clipboard');
+            console.log('Fallback: Text in Zwischenablage kopiert');
+          } catch (clipboardError) {
+            console.error('Auch Zwischenablage fehlgeschlagen:', clipboardError);
+            setInsertionStatus('failed');
           }
         }
       } else {
@@ -327,34 +291,20 @@ export default function Home() {
                 onClick={async () => {
                   if (zafClient) {
                     try {
-                      // Versuche direkte DOM-Manipulation
-                      const textareas = window.parent.document.querySelectorAll('textarea');
-                      let composerFound = false;
+                      // Sende Test-Nachricht an Parent Window
+                      window.parent.postMessage({
+                        type: 'zendesk_composer_insert',
+                        text: 'Test-Text vom GPT Assistant - PostMessage-Methode funktioniert! 🎉',
+                        source: 'forage_gpt_test'
+                      }, '*');
                       
-                      textareas.forEach(textarea => {
-                        if (textarea.placeholder && 
-                            (textarea.placeholder.includes('Antwort') || 
-                             textarea.placeholder.includes('Reply') ||
-                             textarea.placeholder.includes('Comment') ||
-                             textarea.className.includes('composer') ||
-                             textarea.id.includes('comment'))) {
-                          textarea.value = 'Test-Text vom GPT Assistant - DOM-Methode funktioniert! 🎉';
-                          textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                          textarea.focus();
-                          composerFound = true;
-                        }
-                      });
+                      // Kopiere auch in Zwischenablage als Backup
+                      await navigator.clipboard.writeText('Test-Text vom GPT Assistant - Zwischenablage-Methode');
+                      console.log('✅ Test-Nachricht gesendet und Text in Zwischenablage kopiert');
                       
-                      if (composerFound) {
-                        console.log('✅ DOM-Test erfolgreich - Text wurde eingefügt!');
-                      } else {
-                        // Fallback: Kopiere in Zwischenablage
-                        await navigator.clipboard.writeText('Test-Text vom GPT Assistant - Zwischenablage-Methode');
-                        console.log('📋 Text in Zwischenablage kopiert - bitte manuell einfügen');
-                      }
                     } catch (error) {
                       console.error('Test fehlgeschlagen:', error);
-                      // Versuche Zwischenablage als Fallback
+                      // Versuche nur Zwischenablage als Fallback
                       try {
                         await navigator.clipboard.writeText('Test-Text vom GPT Assistant - Fallback');
                         console.log('📋 Fallback: Text in Zwischenablage kopiert');
@@ -419,6 +369,11 @@ export default function Home() {
               ✅ Text wurde automatisch in das Zendesk Antwortfeld eingefügt
             </div>
           )}
+          {insertionStatus === 'message-sent' && (
+            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+              ✅ Text wurde an Zendesk gesendet und in Zwischenablage kopiert - sollte automatisch eingefügt werden
+            </div>
+          )}
           {insertionStatus === 'dom-success' && (
             <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
               ✅ Text wurde in das Zendesk Antwortfeld eingefügt (DOM-Methode)
@@ -426,7 +381,7 @@ export default function Home() {
           )}
           {insertionStatus === 'clipboard' && (
             <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-              📋 Text wurde in die Zwischenablage kopiert - bitte manuell in Zendesk einfügen (Strg+V)
+              📋 Text wurde in die Zwischenablage kopiert - bitte manuell in Zendesk einfügen (Strg+V/Cmd+V)
             </div>
           )}
           {insertionStatus === 'success-fallback' && (
