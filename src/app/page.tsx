@@ -83,7 +83,6 @@ export default function Home() {
           ]);
 
           // Logge die Ticketdaten für Debuggingclient.invoke('comment.insertText', 'Test 1');
-            client.invoke('ticket.comment.appendText', 'Test 3');
 
             console.log('Vollständige Ticketdaten:', ticketData);
             
@@ -246,8 +245,7 @@ export default function Home() {
           // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
           // setInsertionStatus('message-sent');
           
-          await zafClient.invoke('comment.insertText', data.response);
-          console.log('Text erfolgreich eingefügt');
+          await zafClient.invoke('ticket.comment.appendText', data.response);
           setInsertionStatus('success');
           
         } catch (zafError) {
