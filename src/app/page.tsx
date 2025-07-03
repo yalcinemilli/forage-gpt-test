@@ -235,6 +235,8 @@ export default function Home() {
           await zafClient.invoke('ticket.comment.appendText', data.response);
           
         } catch (zafError) {
+          console.error('Fehler beim Hinzufügen der Antwort:', zafError);
+          
           // Fallback: Nur Zwischenablage
           try {
             await navigator.clipboard.writeText(data.response);
