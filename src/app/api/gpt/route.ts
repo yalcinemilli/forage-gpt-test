@@ -49,11 +49,11 @@ Dein FORÀGE Team"
 
 export async function POST(request: NextRequest) {
   try {
-    const { customerConversation } = await request.json();
+    const { subject, conversation, customerFirstName, userInstruction } = await request.json();
 
-    if (!customerConversation) {
+    if (!conversation || !userInstruction) {
       return NextResponse.json(
-        { error: 'Kundenkonversation ist erforderlich' },
+        { error: 'Konversation und Anweisung sind erforderlich' },
         { status: 400 }
       );
     }
@@ -67,14 +67,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Erstelle eine personalisierte Systemnachricht
+    const enhancedSystemPrompt = `${systemPrompt}
+
+Zusätzliche Informationen für diese Anfrage:
+- Betreff des Tickets: ${subject || 'Nicht verfügbar'}
+- Vorname des Kunden: ${customerFirstName || 'Nicht verfügbar'}
+- Spezielle Anweisung: ${userInstruction}
+
+Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
+
     const messages: OpenAIMessage[] = [
       {
         role: 'system',
-        content: systemPrompt
+        content: enhancedSystemPrompt
       },
       {
         role: 'user',
-        content: `Der Verlauf mit dem Kunden:\n\n${customerConversation}`
+        content: `Der Verlauf mit dem Kunden:\n\n${conversation}`
       }
     ];
 

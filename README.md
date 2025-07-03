@@ -29,7 +29,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
-## 🔧 Available Scripts
+## � Zendesk Integration
+
+Diese App kann als Zendesk App integriert werden:
+
+### Setup für Zendesk
+1. **ZCLI installieren**: `npm install @zendesk/zcli -g`
+2. **App erstellen**: Kopiere die Dateien aus `public/` in einen neuen Ordner
+3. **App validieren**: `zcli apps:validate`
+4. **App deployen**: `zcli apps:create`
+
+### Dateien für Zendesk App
+- `public/manifest.json` - App Konfiguration
+- `public/zendesk-app.html` - App Interface
+- API Endpoint muss in den App-Einstellungen konfiguriert werden
+
+### �🔧 Available Scripts
 
 - `npm run dev` - Start the development server with Turbopack
 - `npm run build` - Build the application for production

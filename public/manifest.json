@@ -1,0 +1,39 @@
+{
+  "name": "Foràge GPT Assistant",
+  "author": {
+    "name": "Foràge Clothing",
+    "email": "support@forage-clothing.com"
+  },
+  "version": "1.0.0",
+  "frameworkVersion": "2.0",
+  "location": {
+    "support": {
+      "ticket_sidebar": {
+        "url": "assets/zendesk-app.html",
+        "flexible": true
+      }
+    }
+  },
+  "defaultLocale": "de",
+  "private": true,
+  "singleInstall": true,
+  "signedUrls": false,
+  "domainWhitelist": [
+    "localhost:3000",
+    "your-domain.com"
+  ],
+  "parameters": [
+    {
+      "name": "api_endpoint",
+      "type": "url",
+      "required": true,
+      "default": "http://localhost:3000"
+    },
+    {
+      "name": "openai_model", 
+      "type": "text",
+      "required": false,
+      "default": "gpt-4o"
+    }
+  ]
+}

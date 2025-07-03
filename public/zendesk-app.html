@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Foràge GPT - Zendesk App</title>
+  
+  <!-- Zendesk App Framework -->
+  <script src="https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js"></script>
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #f8f9fa;
+    }
+    
+    .container {
+      max-width: 100%;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      color: #2f3941;
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+    
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    
+    .status.connected {
+      background: #e6f7ff;
+      border: 1px solid #91d5ff;
+      color: #0050b3;
+    }
+    
+    .status.loading {
+      background: #fff7e6;
+      border: 1px solid #ffd666;
+      color: #d46b08;
+    }
+    
+    .button {
+      background: #2f3941;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    
+    .button:hover {
+      background: #46535f;
+    }
+    
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .response {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f6f8fa;
+      border-radius: 6px;
+      border: 1px solid #d0d7de;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .error {
+      background: #ffebee;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🤖 Foràge GPT Assistant</h1>
+      <p>Automatische Kundenservice-Antworten</p>
+    </div>
+    
+    <div id="status" class="status loading">
+      📡 Verbinde mit Zendesk...
+    </div>
+    
+    <div style="margin-bottom: 16px;">
+      <label for="instructionInput" style="display: block; margin-bottom: 8px; font-weight: 500;">
+        Anweisung für ChatGPT:
+      </label>
+      <input 
+        type="text" 
+        id="instructionInput" 
+        value="Erstelle eine professionelle Kundenservice-Antwort im Foràge-Stil"
+        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+        placeholder="z.B. Erstelle eine freundliche Antwort mit Lösungsvorschlag..."
+      />
+    </div>
+    
+    <button id="generateBtn" class="button" disabled>
+      ✨ Antwort generieren
+    </button>
+    
+    <div id="response" style="display: none;"></div>
+  </div>
+
+  <script>
+    const client = ZAFClient.init();
+    const statusEl = document.getElementById('status');
+    const generateBtn = document.getElementById('generateBtn');
+    const responseEl = document.getElementById('response');
+    const instructionInput = document.getElementById('instructionInput');
+    
+    let ticketData = null;
+    let ticketSubject = '';
+    let customerFirstName = '';
+
+    client.on('app.registered', async () => {
+      try {
+        ticketData = await client.get([
+          'ticket.id',
+          'ticket.subject',
+          'ticket.description',
+          'ticket.priority',
+          'ticket.requester.name',
+          'ticket.requester.email',
+          'ticket.requester.id',
+          'ticket.status',
+          'ticket.createdAt',
+          'ticket.updatedAt',
+          'ticket.comments'
+        ]);
+        
+        ticketSubject = ticketData['ticket.subject'] || '';
+        const fullName = ticketData['ticket.requester.name'] || '';
+        customerFirstName = fullName.split(' ')[0]; // Nimmt ersten Teil des Namens
+        
+        statusEl.className = 'status connected';
+        statusEl.innerHTML = '✅ Verbunden mit Ticket #' + ticketData['ticket.id'] + 
+                            ' (' + (ticketData['ticket.comments']?.length || 0) + ' Kommentare)<br>' +
+                            '<small>Kunde: ' + customerFirstName + ' | Betreff: ' + ticketSubject + '</small>';
+        generateBtn.disabled = false;
+        
+        console.log('Vollständige Ticket Data:', ticketData);
+      } catch (error) {
+        console.error('Fehler beim Laden der Ticketdaten:', error);
+        statusEl.className = 'status error';
+        statusEl.innerHTML = '❌ Fehler beim Laden der Ticketdaten';
+      }
+    });
+
+    generateBtn.addEventListener('click', async () => {
+      if (!ticketData) return;
+      
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = '⏳ Generiere Antwort...';
+      responseEl.style.display = 'none';
+      
+      try {
+        // Formatiere die Kundenkonversation
+        const conversation = formatTicketData(ticketData);
+        const userInstruction = instructionInput.value.trim();
+        
+        if (!userInstruction) {
+          throw new Error('Bitte gib eine Anweisung ein');
+        }
+        
+        // Rufe die Next.js API auf
+        const response = await fetch('/api/gpt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            subject: ticketSubject,
+            conversation: conversation,
+            customerFirstName: customerFirstName,
+            userInstruction: userInstruction
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Fehler bei der Anfrage');
+        }
+        
+        // Zeige die Antwort
+        responseEl.innerHTML = data.response;
+        responseEl.className = 'response';
+        responseEl.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Fehler:', error);
+        responseEl.innerHTML = 'Fehler: ' + error.message;
+        responseEl.className = 'response error';
+        responseEl.style.display = 'block';
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '✨ Antwort generieren';
+      }
+    });
+
+    function formatTicketData(data) {
+      const subject = data['ticket.subject'] || 'Kein Betreff';
+      const description = data['ticket.description'] || 'Keine Beschreibung';
+      const customerName = data['ticket.requester.name'] || 'Kunde';
+      const customerEmail = data['ticket.requester.email'] || '';
+      const comments = data['ticket.comments'] || [];
+      const status = data['ticket.status'] || '';
+      const createdAt = data['ticket.createdAt'] || '';
+      const requesterId = data['ticket.requester.id'];
+      
+      // Beginne mit dem Betreff und der ursprünglichen Beschreibung
+      let conversation = `[Betreff]\n${subject}\n\n[Ticket-Info]\n`;
+      conversation += `Status: ${status}\n`;
+      conversation += `Erstellt: ${createdAt}\n`;
+      conversation += `Kunde: ${customerName}`;
+      if (customerEmail) {
+        conversation += ` (${customerEmail})`;
+      }
+      conversation += `\n\n[Gesamter Verlauf inkl. Namen etc.]\n`;
+      
+      // Füge alle Kommentare in chronologischer Reihenfolge hinzu
+      if (comments && comments.length > 0) {
+        comments.forEach((comment, index) => {
+          const authorName = comment.author?.name || 'Unbekannt';
+          const authorRole = comment.author?.role || '';
+          const commentDate = comment.created_at || '';
+          const commentBody = comment.value || comment.html_body || comment.plain_body || '';
+          
+          // Formatiere Datum lesbarer
+          let formattedDate = '';
+          if (commentDate) {
+            try {
+              formattedDate = new Date(commentDate).toLocaleString('de-DE');
+            } catch (e) {
+              formattedDate = commentDate;
+            }
+          }
+          
+          // Bestimme ob es der Kunde oder Support ist
+          const isCustomer = authorRole === 'end-user' || comment.author?.id === requesterId;
+          const roleLabel = isCustomer ? 'Kunde' : 'Support';
+          
+          // Ersten Kommentar (ursprüngliche Nachricht) speziell behandeln
+          if (index === 0) {
+            conversation += `${commentBody}\n\n`;
+          } else {
+            // Weitere Kommentare mit Zeitstempel und Autor
+            conversation += `--- ${roleLabel} (${authorName}) - ${formattedDate} ---\n`;
+            conversation += `${commentBody}\n\n`;
+          }
+        });
+      } else {
+        // Fallback falls keine Kommentare verfügbar sind
+        conversation += `${description}\n\n`;
+      }
+      
+      conversation += `LG\n${customerName}`;
+      
+      return conversation;
+    }
+  </script>
+</body>
+</html>
