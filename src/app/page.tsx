@@ -59,50 +59,81 @@ export default function Home() {
 
   const initializeZAFClient = React.useCallback(() => {
     if (typeof window !== 'undefined' && window.ZAFClient) {
-      const client = window.ZAFClient.init();
-      setZafClient(client);
-      
-      client.on('app.registered', async () => {
-        try {
-          const ticketData = await client.get([
-            'ticket.id',
-            'ticket.subject',
-            'ticket.description',       // Erster Kommentar (Problem-Beschreibung)
-            'ticket.priority',          // z.B. Dringlichkeit
-            'ticket.requester.name',    // Name des Kunden
-            'ticket.requester.email',   // Email des Kunden
-            'ticket.requester.language', // Sprache (falls als Feld verfügbar)
-            'ticket.comments',          // Alle Kommentare der Unterhaltung
-            'ticket.status',            // Status des Tickets
-            'ticket.createdAt',         // Erstellungsdatum
-            'ticket.updatedAt'          // Letztes Update
-            // ggf. weitere Felder wie 'ticket.customField:{{id}}' für Produkt etc.
-          ]);
+      try {
+        const client = window.ZAFClient.init();
+        setZafClient(client);
+        console.log('ZAF Client initialisiert');
+        
+        client.on('app.registered', async () => {
+          console.log('App registriert bei Zendesk');
+          try {
+            const ticketData = await client.get([
+              'ticket.id',
+              'ticket.subject',
+              'ticket.description',       // Erster Kommentar (Problem-Beschreibung)
+              'ticket.priority',          // z.B. Dringlichkeit
+              'ticket.requester.name',    // Name des Kunden
+              'ticket.requester.email',   // Email des Kunden
+              'ticket.requester.language', // Sprache (falls als Feld verfügbar)
+              'ticket.comments',          // Alle Kommentare der Unterhaltung
+              'ticket.status',            // Status des Tickets
+              'ticket.createdAt',         // Erstellungsdatum
+              'ticket.updatedAt',         // Letztes Update
+              'ticket.requester.id'       // ID des Kunden für Vergleiche
+            ]);
 
-          console.log('Vollständige Ticketdaten:', ticketData);
-          
-          // Speichere Betreff und Kundenname separat
-          setTicketSubject(ticketData['ticket.subject'] || '');
-          const fullName = ticketData['ticket.requester.name'] || '';
-          const firstName = fullName.split(' ')[0]; // Nimmt ersten Teil des Namens
-          setCustomerFirstName(firstName);
-          
-          // Automatisch komplette Kundenkonversation aus Ticketdaten erstellen
-          const conversation = formatCompleteTicketData(ticketData);
-          setCustomerConversation(conversation);
-        } catch (error) {
-          console.error('Fehler beim Laden der Ticketdaten:', error);
-        }
-      });
+            console.log('Vollständige Ticketdaten:', ticketData);
+            
+            // Speichere Betreff und Kundenname separat
+            setTicketSubject(ticketData['ticket.subject'] || '');
+            const fullName = ticketData['ticket.requester.name'] || '';
+            const firstName = fullName.split(' ')[0]; // Nimmt ersten Teil des Namens
+            setCustomerFirstName(firstName);
+            
+            // Automatisch komplette Kundenkonversation aus Ticketdaten erstellen
+            const conversation = formatCompleteTicketData(ticketData);
+            setCustomerConversation(conversation);
+          } catch (error) {
+            console.error('Fehler beim Laden der Ticketdaten:', error);
+          }
+        });
+        
+        // Zusätzliche Event-Listener für Debugging
+        client.on('app.activated', () => {
+          console.log('App aktiviert');
+        });
+        
+      } catch (error) {
+        console.error('Fehler bei der ZAF Client Initialisierung:', error);
+      }
     }
   }, []);
 
   useEffect(() => {
-    // ZAF Client wird normalerweise über ein Script Tag geladen
-    // In einer echten Zendesk App würde das automatisch verfügbar sein
-    if (typeof window !== 'undefined' && window.ZAFClient) {
-      initializeZAFClient();
-    }
+    // Lade ZAF Client Script dynamisch, falls es nicht bereits geladen ist
+    const loadZAFClient = () => {
+      if (typeof window !== 'undefined') {
+        if (window.ZAFClient) {
+          initializeZAFClient();
+        } else {
+          // Versuche ZAF Client Script zu laden
+          const script = document.createElement('script');
+          script.src = 'https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js';
+          script.onload = () => {
+            console.log('ZAF SDK geladen');
+            if (window.ZAFClient) {
+              initializeZAFClient();
+            }
+          };
+          script.onerror = () => {
+            console.log('ZAF SDK konnte nicht geladen werden - App läuft außerhalb von Zendesk');
+          };
+          document.head.appendChild(script);
+        }
+      }
+    };
+
+    loadZAFClient();
   }, [initializeZAFClient]);
 
   function formatCompleteTicketData(ticketData: TicketData): string {
@@ -197,28 +228,44 @@ export default function Home() {
       
       // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
       if (zafClient) {
+        console.log('Versuche Text in Zendesk Composer einzufügen...');
         try {
-          // Verwende die richtige ZAF Client API für das Composer-Feld
+          // Methode 1: composer.text API
           await zafClient.invoke('composer.text', data.response);
-          console.log('Text wurde erfolgreich in Zendesk Antwortfeld eingefügt');
+          console.log('Text wurde erfolgreich mit composer.text eingefügt');
           setInsertionStatus('success');
           
           // Zusätzlich: Versuche den Cursor ans Ende des Textes zu setzen
-          await zafClient.invoke('composer.cursorPosition', data.response.length);
-        } catch (zafError) {
-          console.error('Fehler beim Einfügen in Zendesk:', zafError);
+          try {
+            await zafClient.invoke('composer.cursorPosition', data.response.length);
+          } catch (cursorError) {
+            console.log('Cursor-Position konnte nicht gesetzt werden:', cursorError);
+          }
           
-          // Fallback: Versuche alternative Methoden
+        } catch (zafError) {
+          console.error('Fehler beim Einfügen mit composer.text:', zafError);
+          
+          // Methode 2: Verwende set() statt invoke()
           try {
             await zafClient.set('composer.text', data.response);
-            console.log('Text mit alternativer Methode eingefügt');
+            console.log('Text wurde mit set() Methode eingefügt');
             setInsertionStatus('success-fallback');
-          } catch (fallbackError) {
-            console.error('Auch Fallback-Methode fehlgeschlagen:', fallbackError);
-            setInsertionStatus('failed');
+          } catch (setError) {
+            console.error('Auch set() Methode fehlgeschlagen:', setError);
+            
+            // Methode 3: Versuche verschiedene Composer-APIs
+            try {
+              await zafClient.invoke('composer.setContent', data.response);
+              console.log('Text wurde mit composer.setContent eingefügt');
+              setInsertionStatus('success-fallback');
+            } catch (setContentError) {
+              console.error('Alle Einfüge-Methoden fehlgeschlagen:', setContentError);
+              setInsertionStatus('failed');
+            }
           }
         }
       } else {
+        console.log('ZAF Client nicht verfügbar');
         setInsertionStatus('no-client');
       }
     } catch (err) {
@@ -246,6 +293,22 @@ export default function Home() {
             <div className="text-xs text-blue-600 mt-1">
               <p><strong>Betreff:</strong> {ticketSubject || 'Nicht geladen'}</p>
               <p><strong>Kunde:</strong> {customerFirstName || 'Nicht geladen'}</p>
+              <button 
+                onClick={async () => {
+                  if (zafClient) {
+                    try {
+                      await zafClient.invoke('composer.text', 'Test-Text vom GPT Assistant');
+                      alert('Test erfolgreich - Text wurde eingefügt!');
+                    } catch (error) {
+                      console.error('Test fehlgeschlagen:', error);
+                      alert('Test fehlgeschlagen: ' + error);
+                    }
+                  }
+                }}
+                className="mt-1 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+              >
+                🧪 Test Einfügung
+              </button>
             </div>
           )}
           {!zafClient && (
