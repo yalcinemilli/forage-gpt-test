@@ -1,63 +1,67 @@
-# Zendesk App Setup
+# Zendesk App Setup - Aktualisierte Anleitung
 
-## Lokale Entwicklung
+## App direkt in Zendesk hochladen (Empfohlen)
 
-1. **Next.js Server starten**:
-   ```bash
-   npm run dev
-   ```
+### Schritt 1: Vercel App bereitstellen
+```bash
+# Vercel CLI installieren falls nötig
+npm i -g vercel
 
-2. **OpenAI API Key konfigurieren**:
-   Bearbeite `.env.local` und setze deinen API Key:
-   ```
-   OPENAI_API_KEY=dein_api_key_hier
-   ```
+# App bereitstellen
+vercel
 
-3. **App im Browser testen**:
-   - Öffne http://localhost:3000
-   - Teste die GPT API mit dem Beispiel-Text
+# Notiere dir die URL, z.B. https://forage-gpt-xyz.vercel.app
+```
 
-## Zendesk Integration
+### Schritt 2: Manifest.json für Upload vorbereiten
+Erstelle eine einfache `manifest.json` für den direkten Upload:
 
-### Voraussetzungen
-- Zendesk CLI installiert: ``
-- Zendesk Developer Account
+```json
+{
+  "name": "Foràge GPT Assistant",
+  "author": {
+    "name": "Foràge Clothing",
+    "email": "support@forage-clothing.com"
+  },
+  "version": "1.0.0",
+  "frameworkVersion": "2.0",
+  "location": {
+    "support": {
+      "ticket_sidebar": {
+        "url": "https://DEINE-VERCEL-URL.vercel.app/",
+        "flexible": true,
+        "size": {
+          "width": "100%",
+          "height": "600px"
+        }
+      }
+    }
+  },
+  "defaultLocale": "en",
+  "private": true
+}
+```
 
-### Setup Schritte
+### Schritt 3: In Zendesk Admin hochladen
+1. **Zendesk Admin öffnen**: 
+   - Gehe zu `https://[DEINE-SUBDOMAIN].zendesk.com/admin`
 
-1. **Zendesk App Ordner erstellen**:
-   ```bash
-   mkdir forage-gpt-zendesk-app
-   cd forage-gpt-zendesk-app
-   ```
+2. **Zu Apps navigieren**:
+   - Klicke "Apps und Integrationen" (links)
+   - Wähle "Apps" → "Zendesk Support apps"
 
-2. **Dateien kopieren**:
-   ```bash
-   cp ../public/manifest.json .
-   mkdir assets
-   cp ../public/zendesk-app.html assets/
-   ```
+3. **Private App hochladen**:
+   - Klicke "Upload private app" (oben rechts)
+   - Wähle deine `manifest.json` Datei
+   - Klicke "Upload"
 
-3. **App validieren**:
-   ```bash
-   zcli apps:validate
-   ```
+4. **App installieren**:
+   - Nach dem Upload: Klicke "Install" neben der App
+   - Bestätige die Installation
 
-4. **App hochladen**:
-   ```bash
-   zcli apps:create
-   ```
+## Alternative: ZCLI Probleme beheben
 
-5. **In Zendesk installieren**:
-   - Gehe zu Admin → Apps und Integrationen → Apps → Private Apps
-   - Finde deine App und installiere sie
-   - Konfiguriere den API Endpoint (z.B. `https://your-domain.com`)
-
-### Konfiguration
-
-In den App-Einstellungen musst du folgende Parameter setzen:
-- **API Endpoint**: Die URL zu deiner Next.js App (z.B. `https://your-domain.com`)
-- **OpenAI Model**: Standard ist `gpt-4o`
+Falls du trotzdem ZCLI verwenden möchtest:
 
 ### Nutzung
 
@@ -97,3 +101,73 @@ Generiert eine Kundenservice-Antwort basierend auf der Kundenkonversation.
 
 ### Andere Plattformen
 Die App kann auf jeder Node.js-kompatiblen Plattform deployed werden (Railway, Render, etc.).
+
+## ZCLI Troubleshooting (falls der 400 Error auftritt)
+
+Der 400 Bad Request Error kann verschiedene Ursachen haben:
+
+### 1. ZCLI aktualisieren
+```bash
+npm uninstall -g @zendesk/zcli
+npm install -g @zendesk/zcli@latest
+zcli --version
+```
+
+### 2. Authentication überprüfen
+```bash
+zcli logout
+zcli login
+```
+
+### 3. Manifest.json vereinfachen
+Erstelle eine minimale `manifest.json`:
+```json
+{
+  "name": "Foràge GPT Assistant",
+  "author": {
+    "name": "Foràge",
+    "email": "support@forage-clothing.com"
+  },
+  "version": "1.0.0",
+  "frameworkVersion": "2.0",
+  "location": {
+    "support": {
+      "ticket_sidebar": "assets/iframe.html"
+    }
+  },
+  "defaultLocale": "en",
+  "private": true
+}
+```
+
+### 4. Assets-Ordner korrekt strukturieren
+```bash
+mkdir -p assets
+echo '<iframe src="https://DEINE-VERCEL-URL.vercel.app/" width="100%" height="600"></iframe>' > assets/iframe.html
+```
+
+## Empfohlene Lösung: Direkter Upload
+
+Da ZCLI oft Probleme macht, verwende den **direkten Upload** über die Zendesk Admin-Oberfläche:
+
+1. Erstelle eine einfache `manifest.json` (siehe oben)
+2. Gehe zu Zendesk Admin → Apps → "Upload private app"
+3. Wähle die `manifest.json` Datei
+4. Installiere die App
+
+## Lokale Entwicklung
+
+1. **Next.js Server starten**:
+   ```bash
+   npm run dev
+   ```
+
+2. **OpenAI API Key konfigurieren**:
+   Bearbeite `.env.local` und setze deinen API Key:
+   ```
+   OPENAI_API_KEY=dein_api_key_hier
+   ```
+
+3. **App im Browser testen**:
+   - Öffne http://localhost:3000
+   - Teste die GPT API mit dem Beispiel-Text
