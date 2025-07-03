@@ -239,7 +239,7 @@ export default function Home() {
           // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
           // setInsertionStatus('message-sent');
           
-          await zafClient.invoke('comment.insertText', data.response);
+          await zafClient.invoke('ticket.comment.insertText', data.response);
           console.log('Text erfolgreich eingefügt');
           setInsertionStatus('success');
           
