@@ -239,7 +239,7 @@ export default function Home() {
           console.log('RAW GPT-Response:', data.response);
 
  //         await zafClient.invoke('ticket.comment.appendHtml', formatAsHtmlBreaks(data.response));
-          await zafClient.set('ticket.comment.text', data.response);
+          await zafClient.invoke('ticket.comment.text', data.response);
 
 
 
