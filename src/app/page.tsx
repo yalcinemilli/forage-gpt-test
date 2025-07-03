@@ -230,6 +230,8 @@ export default function Home() {
       if (zafClient) {
         try {
 
+          console.log('RAW GPT-Response:', data.response);
+
           await zafClient.invoke('ticket.comment.appendText', data.response);
           
         } catch (zafError) {
