@@ -156,7 +156,6 @@ export default function Home() {
     if (customerEmail) {
       conversation += ` (${customerEmail})`;
     }
-    conversation += `\n\n[Gesamter Verlauf inkl. Namen etc.]\n`;
     
     // Füge alle Kommentare in chronologischer Reihenfolge hinzu
     if (comments && comments.length > 0) {
@@ -233,18 +232,9 @@ export default function Home() {
       if (zafClient) {
         console.log('Versuche Text in Zendesk Composer einzufügen...');
         try {
-          // // Methode 1: Verwende postMessage an Parent Window
-          // window.parent.postMessage({
-          //   type: 'zendesk_composer_insert',
-          //   text: data.response,
-          //   source: 'forage_gpt'
-          // }, '*');
-          
-          // // Setze Text auch in Zwischenablage als Backup
-          // await navigator.clipboard.writeText(data.response);
-          // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
-          // setInsertionStatus('message-sent');
+
           console.log('RAW GPT-Response:', data.response);
+
           await zafClient.invoke('ticket.comment.appendText', data.response);
           setInsertionStatus('success');
           
