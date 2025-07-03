@@ -62,7 +62,11 @@ export default function Home() {
         const client = window.ZAFClient.init();
         setZafClient(client);
         console.log('ZAF Client initialisiert');
-        
+
+        client.invoke('comment.insertText', 'Test 1');
+        client.invoke('comment.setValue', 'Test 1');
+
+
         client.on('app.registered', async () => {
           console.log('App registriert bei Zendesk');
           try {          const ticketData = await client.get([
@@ -112,6 +116,7 @@ export default function Home() {
       if (typeof window !== 'undefined') {
         if (window.ZAFClient) {
           initializeZAFClient();
+          
         } else {
           // Versuche ZAF Client Script zu laden
           const script = document.createElement('script');
