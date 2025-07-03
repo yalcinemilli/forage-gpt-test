@@ -197,7 +197,7 @@ export default function Home() {
     
     return conversation;
   }
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   function formatAsHtmlBreaks(text: string): string {
   return text
     .replace(/\n\n/g, '<br><br>') // Absätze
