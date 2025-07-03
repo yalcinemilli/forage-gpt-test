@@ -294,7 +294,7 @@ export default function Home() {
         try {
           await navigator.clipboard.writeText(data.response);
           setInsertionStatus('clipboard');
-        } catch (clipboardError) {
+        } catch {
           setInsertionStatus('no-client');
         }
       }
