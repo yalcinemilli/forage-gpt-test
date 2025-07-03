@@ -47,7 +47,6 @@ interface ZAFClientInstance {
 export default function Home() {
   const [customerConversation, setCustomerConversation] = useState(``);
   const [userInstruction, setUserInstruction] = useState('');
-  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -211,7 +210,6 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setResponse('');
 
     try {
       const res = await fetch('/api/gpt', {
@@ -233,7 +231,6 @@ export default function Home() {
         throw new Error(data.error || 'Fehler bei der Anfrage');
       }
 
-      setResponse(data.response);
       
       // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
       if (zafClient) {
@@ -268,9 +265,9 @@ export default function Home() {
   };
 
   return (
-    <div className="app">  
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
+    <div className="w-full min-h-screen p-4 space-y-6">  
+      <form onSubmit={handleSubmit} className="w-full space-y-4">
+        <div className="w-full">
           <textarea
             id="instruction"
             rows={4}
@@ -298,26 +295,6 @@ export default function Home() {
         </div>
       )}
 
-      {response && (
-        <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">
-            Generierte Kundenservice-Antwort:
-          </h3>
-          
-          
-          <div className="whitespace-pre-wrap text-gray-700 bg-white p-3 rounded border">
-            {response}
-          </div>
-          
-          {/* Kopieren-Button immer anzeigen als Backup */}
-          <button 
-            onClick={() => navigator.clipboard.writeText(response)}
-            className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
-          >
-            📋 In Zwischenablage kopieren
-          </button>
-        </div>
-      )}
     </div>
   );
 }
