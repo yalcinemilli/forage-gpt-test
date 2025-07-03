@@ -199,6 +199,10 @@ export default function Home() {
     return conversation;
   }
 
+  function forceLineBreaksForZendesk(input: string): string {
+    return input.replace(/\n/g, '\u2028'); // LINE SEPARATOR
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -235,7 +239,7 @@ export default function Home() {
 
           console.log('RAW GPT-Response:', data.response);
 
-          await zafClient.invoke('ticket.comment.appendText', data.response);
+          await zafClient.invoke('ticket.comment.appendText', forceLineBreaksForZendesk(data.response));
           setInsertionStatus('success');
           
         } catch (zafError) {
