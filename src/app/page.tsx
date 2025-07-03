@@ -15,6 +15,7 @@ interface ZAFClientInstance {
   on: (event: string, callback: () => void) => void;
   get: (keys: string[]) => Promise<any>;
   invoke: (api: string, ...args: any[]) => Promise<any>;
+  set: (key: string, value: any) => Promise<any>;
 }
 
 export default function Home() {
@@ -179,6 +180,17 @@ ${customerName}`;
       }
 
       setResponse(data.response);
+      
+      // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
+      if (zafClient) {
+        try {
+          await zafClient.invoke('composer.text', data.response);
+          console.log('Text wurde in Zendesk Antwortfeld eingefügt');
+        } catch (zafError) {
+          console.error('Fehler beim Einfügen in Zendesk:', zafError);
+          // Fallback: Zeige Hinweis an, dass manuell kopiert werden muss
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
@@ -248,9 +260,22 @@ ${customerName}`;
           <h3 className="font-semibold text-gray-900 mb-2">
             Generierte Kundenservice-Antwort:
           </h3>
+          {zafClient && (
+            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+              ✅ Text wurde automatisch in das Zendesk Antwortfeld eingefügt
+            </div>
+          )}
           <div className="whitespace-pre-wrap text-gray-700 bg-white p-3 rounded border">
             {response}
           </div>
+          {!zafClient && (
+            <button 
+              onClick={() => navigator.clipboard.writeText(response)}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+            >
+              📋 In Zwischenablage kopieren
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -22,21 +22,7 @@
     "localhost:3000",
     "https://forage-zendesk-chatgpt.vercel.app/"
   ],
-  "requirements": {
-    "channel_integrations_google_analytics": false,
-    "channel_integrations_amplitude_integration": false
-  },
-  "permission": [
-    "read",
-    "write"
-  ],
   "parameters": [
-    {
-      "name": "api_endpoint",
-      "type": "url",
-      "required": true,
-      "default": "https://forage-zendesk-chatgpt.vercel.app/"
-    },
     {
       "name": "openai_model", 
       "type": "text",

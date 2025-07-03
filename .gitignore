@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+zendesk-app/assets/zendesk-app.html
+zendesk-app/tmp/app-20250703152041857.zip
+zendesk-app/tmp/app-20250703152113060.zip
+zendesk-app/tmp/app-20250703152138855.zip
+zendesk-app/tmp/app-20250703152239445.zip
+public/manifest.json
+public/zendesk-app.html

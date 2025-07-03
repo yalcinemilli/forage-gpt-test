@@ -210,6 +210,15 @@
         responseEl.className = 'response';
         responseEl.style.display = 'block';
         
+        // Füge die Antwort automatisch in das Zendesk Antwortfeld ein
+        try {
+          await client.invoke('composer.text', data.response);
+          responseEl.innerHTML = '✅ Antwort wurde in das Zendesk Antwortfeld eingefügt!\n\n' + data.response;
+        } catch (composerError) {
+          console.error('Fehler beim Einfügen in Composer:', composerError);
+          responseEl.innerHTML = '⚠️ Antwort generiert, konnte aber nicht automatisch eingefügt werden:\n\n' + data.response;
+        }
+        
       } catch (error) {
         console.error('Fehler:', error);
         responseEl.innerHTML = 'Fehler: ' + error.message;
