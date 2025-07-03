@@ -244,7 +244,7 @@ export default function Home() {
           // await navigator.clipboard.writeText(data.response);
           // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
           // setInsertionStatus('message-sent');
-          
+          console.log('RAW GPT-Response:', data.response);
           await zafClient.invoke('ticket.comment.appendText', data.response);
           setInsertionStatus('success');
           
