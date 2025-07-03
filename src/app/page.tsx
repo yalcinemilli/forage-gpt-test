@@ -51,6 +51,7 @@ export default function Home() {
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [insertionStatus, setInsertionStatus] = useState('');
 
   const [zafClient, setZafClient] = useState<ZAFClientInstance | null>(null);
   const [ticketSubject, setTicketSubject] = useState('');
@@ -170,6 +171,7 @@ export default function Home() {
     setLoading(true);
     setError('');
     setResponse('');
+    setInsertionStatus('');
 
     try {
       const res = await fetch('/api/gpt', {
@@ -196,12 +198,28 @@ export default function Home() {
       // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
       if (zafClient) {
         try {
+          // Verwende die richtige ZAF Client API für das Composer-Feld
           await zafClient.invoke('composer.text', data.response);
-          console.log('Text wurde in Zendesk Antwortfeld eingefügt');
+          console.log('Text wurde erfolgreich in Zendesk Antwortfeld eingefügt');
+          setInsertionStatus('success');
+          
+          // Zusätzlich: Versuche den Cursor ans Ende des Textes zu setzen
+          await zafClient.invoke('composer.cursorPosition', data.response.length);
         } catch (zafError) {
           console.error('Fehler beim Einfügen in Zendesk:', zafError);
-          // Fallback: Zeige Hinweis an, dass manuell kopiert werden muss
+          
+          // Fallback: Versuche alternative Methoden
+          try {
+            await zafClient.set('composer.text', data.response);
+            console.log('Text mit alternativer Methode eingefügt');
+            setInsertionStatus('success-fallback');
+          } catch (fallbackError) {
+            console.error('Auch Fallback-Methode fehlgeschlagen:', fallbackError);
+            setInsertionStatus('failed');
+          }
         }
+      } else {
+        setInsertionStatus('no-client');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
@@ -272,22 +290,40 @@ export default function Home() {
           <h3 className="font-semibold text-gray-900 mb-2">
             Generierte Kundenservice-Antwort:
           </h3>
-          {zafClient && (
+          
+          {/* Status der automatischen Einfügung */}
+          {insertionStatus === 'success' && (
             <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
               ✅ Text wurde automatisch in das Zendesk Antwortfeld eingefügt
             </div>
           )}
+          {insertionStatus === 'success-fallback' && (
+            <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+              ⚠️ Text wurde mit alternativer Methode in das Zendesk Antwortfeld eingefügt
+            </div>
+          )}
+          {insertionStatus === 'failed' && (
+            <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              ❌ Automatische Einfügung fehlgeschlagen - bitte manuell kopieren
+            </div>
+          )}
+          {insertionStatus === 'no-client' && (
+            <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+              ℹ️ ZAF Client nicht verfügbar - verwende den Kopieren-Button unten
+            </div>
+          )}
+          
           <div className="whitespace-pre-wrap text-gray-700 bg-white p-3 rounded border">
             {response}
           </div>
-          {!zafClient && (
-            <button 
-              onClick={() => navigator.clipboard.writeText(response)}
-              className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-            >
-              📋 In Zwischenablage kopieren
-            </button>
-          )}
+          
+          {/* Kopieren-Button immer anzeigen als Backup */}
+          <button 
+            onClick={() => navigator.clipboard.writeText(response)}
+            className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
+          >
+            📋 In Zwischenablage kopieren
+          </button>
         </div>
       )}
     </div>
