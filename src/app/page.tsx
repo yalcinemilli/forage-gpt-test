@@ -270,7 +270,7 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full p-4 space-y-6">  
+    <div className="app">  
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <textarea
