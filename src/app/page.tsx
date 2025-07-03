@@ -59,14 +59,10 @@ export default function Home() {
       try {
         const client = window.ZAFClient.init();
         setZafClient(client);
-        console.log('ZAF Client initialisiert');
-
-        
-
-
         client.on('app.registered', async () => {
-          console.log('App registriert bei Zendesk');
-          try {          const ticketData = await client.get([
+          try {          
+            
+            const ticketData = await client.get([
             'ticket.id',
             'ticket.subject',
             'ticket.description',       // Erster Kommentar (Problem-Beschreibung)
@@ -82,7 +78,6 @@ export default function Home() {
 
           // Logge die Ticketdaten für Debuggingclient.invoke('comment.insertText', 'Test 1');
 
-            console.log('Vollständige Ticketdaten:', ticketData);
             
             // Speichere Betreff und Kundenname separat
             setTicketSubject(ticketData['ticket.subject'] || '');
@@ -121,7 +116,6 @@ export default function Home() {
           const script = document.createElement('script');
           script.src = 'https://static.zdassets.com/zendesk_app_framework_sdk/2.0/zaf_sdk.min.js';
           script.onload = () => {
-            console.log('ZAF SDK geladen');
             if (window.ZAFClient) {
               initializeZAFClient();
             }
