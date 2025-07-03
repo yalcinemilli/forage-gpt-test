@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     const { subject, conversation, customerFirstName, userInstruction } = await request.json();
 
-    if (!conversation || !userInstruction) {
+    if (!conversation) {
       return NextResponse.json(
         { error: 'Konversation und Anweisung sind erforderlich' },
         { status: 400 }
