@@ -1,0 +1,23 @@
+{
+  "name": "Foràge GPT Assistant",
+  "author": {
+    "name": "Foràge Clothing",
+    "email": "support@forage-clothing.com"
+  },
+  "version": "1.0.0",
+  "frameworkVersion": "2.0",
+  "location": {
+    "support": {
+      "ticket_sidebar": {
+        "url": "https://forage-zendesk-chatgpt.vercel.app/",
+        "flexible": true,
+        "size": {
+          "width": "100%",
+          "height": "600px"
+        }
+      }
+    }
+  },
+  "defaultLocale": "en",
+  "private": true
+}

@@ -1,8 +1,9 @@
 {
-  "name": "Foràge GPT Assistant",
+  "name": "Forage GPT Assistant",
   "author": {
-    "name": "Foràge Clothing",
-    "email": "support@forage-clothing.com"
+    "name": "Forage Clothing",
+    "email": "support@forage-clothing.com",
+    "url": "https://forage-clothing.com"
   },
   "version": "1.0.0",
   "frameworkVersion": "2.0",
