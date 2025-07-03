@@ -50,7 +50,6 @@ export default function Home() {
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [insertionStatus, setInsertionStatus] = useState('');
 
   const [zafClient, setZafClient] = useState<ZAFClientInstance | null>(null);
   const [ticketSubject, setTicketSubject] = useState('');
@@ -204,7 +203,6 @@ export default function Home() {
     setLoading(true);
     setError('');
     setResponse('');
-    setInsertionStatus('');
 
     try {
       const res = await fetch('/api/gpt', {
@@ -230,23 +228,16 @@ export default function Home() {
       
       // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
       if (zafClient) {
-        console.log('Versuche Text in Zendesk Composer einzufügen...');
         try {
 
           await zafClient.invoke('ticket.comment.appendText', data.response);
-          setInsertionStatus('success');
           
         } catch (zafError) {
-          console.error('Fehler beim Senden der Nachricht:', zafError);
-          
           // Fallback: Nur Zwischenablage
           try {
             await navigator.clipboard.writeText(data.response);
-            setInsertionStatus('clipboard');
-            console.log('Fallback: Text in Zwischenablage kopiert');
           } catch (clipboardError) {
-            console.error('Auch Zwischenablage fehlgeschlagen:', clipboardError);
-            setInsertionStatus('failed');
+            console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
           }
         }
       } else {
@@ -254,9 +245,8 @@ export default function Home() {
         // Kopiere zumindest in die Zwischenablage
         try {
           await navigator.clipboard.writeText(data.response);
-          setInsertionStatus('clipboard');
-        } catch {
-          setInsertionStatus('no-client');
+        } catch (clipboardError) {
+          console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
         }
       }
     } catch (err) {
@@ -267,64 +257,7 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Foràge GPT Kundenservice
-        </h1>
-        <p className="text-gray-600">
-          Teste die automatische Kundenservice-Antwort-Generierung
-        </p>
-        
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
-            <strong>ZAF Client Status:</strong> {zafClient ? '✅ Verbunden' : '❌ Nicht verfügbar'}
-          </p>
-          {zafClient && (
-            <div className="text-xs text-blue-600 mt-1">
-              <p><strong>Betreff:</strong> {ticketSubject || 'Nicht geladen'}</p>
-              <p><strong>Kunde:</strong> {customerFirstName || 'Nicht geladen'}</p>
-              <button 
-                onClick={async () => {
-                  if (zafClient) {
-                    try {
-                      // Sende Test-Nachricht an Parent Window
-                      window.parent.postMessage({
-                        type: 'zendesk_composer_insert',
-                        text: 'Test-Text vom GPT Assistant - PostMessage-Methode funktioniert! 🎉',
-                        source: 'forage_gpt_test'
-                      }, '*');
-                      
-                      // Kopiere auch in Zwischenablage als Backup
-                      await navigator.clipboard.writeText('Test-Text vom GPT Assistant - Zwischenablage-Methode');
-                      console.log('✅ Test-Nachricht gesendet und Text in Zwischenablage kopiert');
-                      
-                    } catch (error) {
-                      console.error('Test fehlgeschlagen:', error);
-                      // Versuche nur Zwischenablage als Fallback
-                      try {
-                        await navigator.clipboard.writeText('Test-Text vom GPT Assistant - Fallback');
-                        console.log('📋 Fallback: Text in Zwischenablage kopiert');
-                      } catch (clipError) {
-                        console.error('Auch Zwischenablage fehlgeschlagen:', clipError);
-                      }
-                    }
-                  }
-                }}
-                className="mt-1 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-              >
-                🧪 Test Einfügung
-              </button>
-            </div>
-          )}
-          {!zafClient && (
-            <p className="text-xs text-blue-600 mt-1">
-              ZAF Client ist nur in einer echten Zendesk App verfügbar
-            </p>
-          )}
-        </div>
-      </div>
-
+    <div className="max-w-4xl mx-auto p-6 space-y-6">  
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <textarea
@@ -360,42 +293,6 @@ export default function Home() {
             Generierte Kundenservice-Antwort:
           </h3>
           
-          {/* Status der automatischen Einfügung */}
-          {insertionStatus === 'success' && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-              ✅ Text wurde automatisch in das Zendesk Antwortfeld eingefügt
-            </div>
-          )}
-          {insertionStatus === 'message-sent' && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-              ✅ Text wurde an Zendesk gesendet und in Zwischenablage kopiert - sollte automatisch eingefügt werden
-            </div>
-          )}
-          {insertionStatus === 'dom-success' && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-              ✅ Text wurde in das Zendesk Antwortfeld eingefügt (DOM-Methode)
-            </div>
-          )}
-          {insertionStatus === 'clipboard' && (
-            <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-              📋 Text wurde in die Zwischenablage kopiert - bitte manuell in Zendesk einfügen (Strg+V/Cmd+V)
-            </div>
-          )}
-          {insertionStatus === 'success-fallback' && (
-            <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-              ⚠️ Text wurde mit alternativer Methode in das Zendesk Antwortfeld eingefügt
-            </div>
-          )}
-          {insertionStatus === 'failed' && (
-            <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-              ❌ Automatische Einfügung fehlgeschlagen - bitte manuell kopieren und einfügen
-            </div>
-          )}
-          {insertionStatus === 'no-client' && (
-            <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-              ℹ️ ZAF Client nicht verfügbar - Text wurde in Zwischenablage kopiert
-            </div>
-          )}
           
           <div className="whitespace-pre-wrap text-gray-700 bg-white p-3 rounded border">
             {response}
