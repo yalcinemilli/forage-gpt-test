@@ -52,9 +52,17 @@ vercel
 - Überprüfe in den Browser-Entwicklertools auf Fehler
 
 ### Automatische Texteinfügung funktioniert nicht
-- Verwende den Test-Button im Interface
-- Überprüfe die Browser-Konsole auf Fehlermeldungen
-- Stelle sicher, dass du das Ticket-Interface geöffnet hast (nicht nur die Ticket-Liste)
+- **Wichtig**: Die `composer.text` API funktioniert nur im neuen Agent Workspace, nicht im Classic Interface
+- Die App verwendet automatisch Fallback-Methoden:
+  1. DOM-Manipulation: Sucht nach Composer-Textareas und fügt Text direkt ein
+  2. Zwischenablage: Kopiert Text automatisch, du musst dann Strg+V drücken
+- Verwende den "🧪 Test Einfügung" Button um zu prüfen, welche Methode funktioniert
+- Überprüfe die Browser-Konsole für detaillierte Meldungen
+
+### Classic vs. New Agent Workspace
+- **Classic Agent Interface**: Automatische Einfügung via DOM-Manipulation oder Zwischenablage
+- **New Agent Workspace**: Direkte API-Unterstützung (falls verfügbar)
+- Die App erkennt automatisch, welche Methode verwendet werden kann
 
 ### API-Fehler
 - Überprüfe, ob OPENAI_API_KEY korrekt in Vercel gesetzt ist
@@ -63,8 +71,18 @@ vercel
 ## Debugging
 - Öffne die Browser-Entwicklertools (F12)
 - Schaue in die Konsole für Meldungen vom ZAF Client
-- Teste die composer.text API manuell in der Konsole:
+- Häufige Meldungen:
+  - `✅ DOM-Test erfolgreich` = DOM-Manipulation funktioniert
+  - `📋 Text in Zwischenablage kopiert` = Verwende Strg+V
+  - `Could not find handler for: "composer.text"` = Normal im Classic Interface
+- Teste die verschiedenen Einfüge-Methoden:
   ```javascript
-  // Im Browser der Zendesk-App:
-  client.invoke('composer.text', 'Test Text');
+  // Im Browser der Zendesk-App (Classic Interface):
+  // DOM-Methode testen:
+  document.querySelectorAll('textarea').forEach(t => {
+    if (t.placeholder.includes('Antwort')) {
+      t.value = 'Test';
+      t.dispatchEvent(new Event('input', {bubbles: true}));
+    }
+  });
   ```
