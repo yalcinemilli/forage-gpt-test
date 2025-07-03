@@ -63,8 +63,7 @@ export default function Home() {
         setZafClient(client);
         console.log('ZAF Client initialisiert');
 
-        client.invoke('comment.insertText', 'Test 1');
-        client.invoke('comment.setValue', 'Test 1');
+        
 
 
         client.on('app.registered', async () => {
@@ -82,6 +81,9 @@ export default function Home() {
             'ticket.updatedAt',         // Letztes Update
             'ticket.requester.id'       // ID des Kunden für Vergleiche
           ]);
+
+          // Logge die Ticketdaten für Debuggingclient.invoke('comment.insertText', 'Test 1');
+            client.invoke('ticket.comment.appendText', 'Test 3');
 
             console.log('Vollständige Ticketdaten:', ticketData);
             
