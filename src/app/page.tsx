@@ -11,11 +11,38 @@ declare global {
   }
 }
 
+interface TicketData {
+  'ticket.id': string;
+  'ticket.subject': string;
+  'ticket.description': string;
+  'ticket.priority': string;
+  'ticket.requester.name': string;
+  'ticket.requester.email': string;
+  'ticket.requester.language': string;
+  'ticket.comments': Comment[];
+  'ticket.status': string;
+  'ticket.createdAt': string;
+  'ticket.updatedAt': string;
+  'ticket.requester.id': string;
+}
+
+interface Comment {
+  author?: {
+    name?: string;
+    role?: string;
+    id?: string;
+  };
+  created_at?: string;
+  value?: string;
+  html_body?: string;
+  plain_body?: string;
+}
+
 interface ZAFClientInstance {
   on: (event: string, callback: () => void) => void;
-  get: (keys: string[]) => Promise<any>;
-  invoke: (api: string, ...args: any[]) => Promise<any>;
-  set: (key: string, value: any) => Promise<any>;
+  get: (keys: string[]) => Promise<TicketData>;
+  invoke: (api: string, ...args: string[]) => Promise<unknown>;
+  set: (key: string, value: unknown) => Promise<unknown>;
 }
 
 export default function Home() {
@@ -29,15 +56,7 @@ export default function Home() {
   const [ticketSubject, setTicketSubject] = useState('');
   const [customerFirstName, setCustomerFirstName] = useState('');
 
-  useEffect(() => {
-    // ZAF Client wird normalerweise über ein Script Tag geladen
-    // In einer echten Zendesk App würde das automatisch verfügbar sein
-    if (typeof window !== 'undefined' && window.ZAFClient) {
-      initializeZAFClient();
-    }
-  }, []);
-
-  function initializeZAFClient() {
+  const initializeZAFClient = React.useCallback(() => {
     if (typeof window !== 'undefined' && window.ZAFClient) {
       const client = window.ZAFClient.init();
       setZafClient(client);
@@ -75,9 +94,17 @@ export default function Home() {
         }
       });
     }
-  }
+  }, []);
 
-  function formatCompleteTicketData(ticketData: any): string {
+  useEffect(() => {
+    // ZAF Client wird normalerweise über ein Script Tag geladen
+    // In einer echten Zendesk App würde das automatisch verfügbar sein
+    if (typeof window !== 'undefined' && window.ZAFClient) {
+      initializeZAFClient();
+    }
+  }, [initializeZAFClient]);
+
+  function formatCompleteTicketData(ticketData: TicketData): string {
     const subject = ticketData['ticket.subject'] || 'Kein Betreff';
     const description = ticketData['ticket.description'] || 'Keine Beschreibung';
     const customerName = ticketData['ticket.requester.name'] || 'Kunde';
@@ -98,7 +125,7 @@ export default function Home() {
     
     // Füge alle Kommentare in chronologischer Reihenfolge hinzu
     if (comments && comments.length > 0) {
-      comments.forEach((comment: any, index: number) => {
+      comments.forEach((comment: Comment, index: number) => {
         const authorName = comment.author?.name || 'Unbekannt';
         const authorRole = comment.author?.role || '';
         const commentDate = comment.created_at || '';
@@ -109,7 +136,7 @@ export default function Home() {
         if (commentDate) {
           try {
             formattedDate = new Date(commentDate).toLocaleString('de-DE');
-          } catch (e) {
+          } catch {
             formattedDate = commentDate;
           }
         }
@@ -136,21 +163,6 @@ export default function Home() {
     conversation += `LG\n${customerName}`;
     
     return conversation;
-  }
-
-  function formatTicketData(ticketData: any): string {
-    const subject = ticketData['ticket.subject'] || 'Kein Betreff';
-    const description = ticketData['ticket.description'] || 'Keine Beschreibung';
-    const customerName = ticketData['ticket.requester.name'] || 'Kunde';
-    
-    return `[Betreff]
-${subject}
-
-[Gesamter Verlauf inkl. Namen etc.]
-${description}
-
-LG
-${customerName}`;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
