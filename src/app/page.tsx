@@ -62,10 +62,6 @@ export default function Home() {
         const client = window.ZAFClient.init();
         setZafClient(client);
         console.log('ZAF Client initialisiert');
-
-        client.invoke('paths').then((paths) => {
-          console.log('Verfügbare invoke-Pfade:', paths);
-        });
         
         client.on('app.registered', async () => {
           console.log('App registriert bei Zendesk');
@@ -243,7 +239,7 @@ export default function Home() {
           // console.log('Text wurde an Parent Window gesendet und in Zwischenablage kopiert');
           // setInsertionStatus('message-sent');
           
-          await zafClient.invoke('ticket.comment.insertText', data.response);
+          await zafClient.invoke('comment.insertText', data.response);
           console.log('Text erfolgreich eingefügt');
           setInsertionStatus('success');
           
