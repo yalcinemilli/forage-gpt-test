@@ -47,7 +47,6 @@ interface ZAFClientInstance {
 export default function Home() {
   const [customerConversation, setCustomerConversation] = useState(``);
   const [userInstruction, setUserInstruction] = useState('');
-  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -208,7 +207,6 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setResponse('');
 
     try {
       const res = await fetch('/api/gpt', {
@@ -230,7 +228,6 @@ export default function Home() {
         throw new Error(data.error || 'Fehler bei der Anfrage');
       }
 
-      setResponse(data.response);
       
       // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
       if (zafClient) {
