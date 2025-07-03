@@ -198,9 +198,11 @@ export default function Home() {
     return conversation;
   }
 
-  function forceLineBreaksForZendesk(input: string): string {
-    return input.replace(/\n/g, '\u2028'); // LINE SEPARATOR
-  }
+  function formatAsHtmlBreaks(text: string): string {
+  return text
+    .replace(/\n\n/g, '<br><br>') // Absätze
+    .replace(/\n/g, '<br>');      // einfache Zeilenumbrüche
+}
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +238,8 @@ export default function Home() {
 
           console.log('RAW GPT-Response:', data.response);
 
-          await zafClient.invoke('ticket.comment.appendText', forceLineBreaksForZendesk(data.response));
+          await zafClient.invoke('ticket.comment.appendText', formatAsHtmlBreaks(data.response));
+
 
         } catch (zafError) {
           console.error('Fehler beim Hinzufügen der Antwort:', zafError);
