@@ -10,7 +10,10 @@
     "support": {
       "ticket_sidebar": {
         "url": "https://forage-zendesk-chatgpt.vercel.app/",
-        "flexible": true
+        "flexible": true,
+        "size": {
+          "height": "700px"
+        }
       }
     }
   },
@@ -21,13 +24,5 @@
   "domainWhitelist": [
     "localhost:3000",
     "https://forage-zendesk-chatgpt.vercel.app/"
-  ],
-  "parameters": [
-    {
-      "name": "openai_model", 
-      "type": "text",
-      "required": false,
-      "default": "gpt-4o"
-    }
   ]
 }
