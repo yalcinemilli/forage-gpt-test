@@ -275,7 +275,7 @@ export default function Home() {
         <div>
           <textarea
             id="instruction"
-            rows={10}
+            rows={4}
             onChange={(e) => setUserInstruction(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="Gib mir Anweisungen, den Verlauf kenne ich bereits"
