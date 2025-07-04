@@ -60,10 +60,11 @@ export default function Home() {
         const client = window.ZAFClient.init();
         setZafClient(client);
 
-        
+
         client.invoke('resize', { width: '100%', height: '700px' });
 
         client.on('app.registered', async () => {
+
           try {          
             
             const ticketData = await client.get([
