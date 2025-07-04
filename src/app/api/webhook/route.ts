@@ -39,11 +39,14 @@ async function analyzeIntent(comment: string, subject: string): Promise<{ intent
           role: 'system',
           content: `Du bist ein KI-Filter für unseren Kundenservice.
 
-Deine Aufgabe: Erkenne, ob es sich um eine Stornierungsanfrage, eine Adressänderung oder keine dieser Optionen handelt.
+Deine Aufgabe:
+- Erkenne, ob es sich um eine **Stornierungsanfrage**, eine **Adressänderung** oder keine dieser Optionen handelt.
+- Eine Adressänderung liegt z. B. vor, wenn der Kunde schreibt, dass er an die falsche Adresse bestellt hat oder eine neue Adresse nennt.
+- Eine Stornierung liegt vor, wenn der Kunde die Bestellung stornieren, abbrechen oder nicht mehr erhalten möchte.
 
-Zusätzlich: Wenn eine Bestellnummer im Text oder Betreff zu finden ist (z. B. 6-stellige Zahl wie 123456), gib diese unter \"order_number\" zurück.
+Zusätzlich: Wenn eine Bestellnummer im Text oder Betreff zu finden ist (z. B. 6-stellige Zahl wie 123456), gib diese unter „order_number“ zurück.
 
-Antworte ausschließlich im folgenden JSON-Format (nichts davor oder danach):
+Antworte **ausschließlich** im folgenden JSON-Format (kein Fließtext, keine Erläuterung):
 {
   "intent": "stornierung" | "adressänderung" | "keine",
   "order_number": "123456" // optional, falls erkennbar
