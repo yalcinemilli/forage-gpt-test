@@ -9,12 +9,13 @@ const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN || 'forage-clothing';
 const FROM_EMAIL = 'support@forage-clothing.com';
 const LAGER_EMAIL = 'hey@markmaurer.de';
 
-interface WebhookBody {
-  ticket_id?: number;
-  comment?: string;
-  customer_email?: string;  
-  customer_name?: string;  
-  subject?: string;
+interface ZendeskWebhook {
+  detail: {
+    id: string;
+    subject?: string;
+    description?: string;
+    requester_id?: string;
+  };
 }
 
 interface OpenAIResponse {
@@ -125,8 +126,10 @@ async function addZendeskComment(ticketId: number, comment: string): Promise<voi
 
 export async function POST(request: NextRequest) {
   try {
-    const body: WebhookBody = await request.json();
-    const { ticket_id, comment = '', customer_name = 'Unbekannt', subject = 'Kein Betreff angegeben', customer_email = 'Unbekannt' } = body;
+    const payload: ZendeskWebhook = await request.json();
+    const ticket_id = Number(payload.detail?.id);
+    const subject = payload.detail?.subject || 'Kein Betreff angegeben';
+    const comment = payload.detail?.description || '';
 
     if (!ticket_id || !comment.trim()) {
       return NextResponse.json({ error: 'Ticket ID und Kommentar sind erforderlich' }, { status: 400 });
@@ -139,8 +142,19 @@ export async function POST(request: NextRequest) {
 
     const resolvedOrderNumber = analysis.order_number || 'Unbekannt';
 
-    await sendLagerEmail(analysis.intent, customer_name, resolvedOrderNumber, comment, subject, customer_email);
-    await addZendeskComment(ticket_id, `🤖 Automatisch erkannt: ${analysis.intent === 'stornierung' ? 'Stornierung' : 'Adressänderung'} angefragt.`);
+    await sendLagerEmail(
+      analysis.intent,
+      'Unbekannt', // Kundenname aus Webhook aktuell nicht verfügbar
+      resolvedOrderNumber,
+      comment,
+      subject,
+      'unbekannt@forage-clothing.com' // Kunden-E-Mail aus Webhook aktuell nicht verfügbar
+    );
+
+    const ticketNote = analysis.intent === 'stornierung'
+  ? '🤖 Automatisch erkannt: Stornierung angefragt.'
+  : '🤖 Automatisch erkannt: Adressänderung angefragt.';
+await addZendeskComment(ticket_id, ticketNote);
 
     return NextResponse.json({ success: true, intent: analysis.intent });
   } catch (error) {
