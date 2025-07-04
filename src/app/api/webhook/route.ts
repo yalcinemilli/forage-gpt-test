@@ -16,6 +16,7 @@ interface WebhookBody {
   customer_email?: string;
   customer_name?: string;
   order_number?: string;
+  subject?: string;
 }
 
 interface OpenAIIntent {
@@ -62,25 +63,27 @@ async function analyzeIntent(comment: string): Promise<OpenAIIntent | null> {
   }
 }
 
-async function sendLagerEmail(type: 'stornierung' | 'adressänderung', name: string, order: string, comment: string) {
-  const subject = type === 'stornierung' ? `Stornierung: Bestellung ${order}` : `Adressänderung: Bestellung ${order}`;
-  const text = `Hallo Team,
+async function sendLagerEmail(type: 'stornierung' | 'adressänderung', name: string, order: string, comment: string, subject: string) {
+  const subjectLine = type === 'stornierung' ? `Stornierung: Bestellung ${order}` : `Adressänderung: Bestellung ${order}`;
+  const text = `Hallo Lager-Team,
 
 Der Kunde ${name} hat eine ${type === 'stornierung' ? 'Stornierung' : 'Adressänderung'} angefragt.
 
+Ursprüngliche Nachricht der Kundin/des Kunden:
+Betreff des Tickets: ${subject}
 Bestellnummer: ${order}
 Kommentar:
 ${comment}
 
-Bitte um kürze Rückmeldung, ob die ${type === 'stornierung' ? 'Stornierung' : 'Adressänderung'} möglich ist.
+Bitte entsprechend bearbeiten.
 
 Liebe Grüße
-FORÀGE Team`;
+Dein FORÀGE System`;
 
   const body = new URLSearchParams({
     from: `FORÀGE Support <${FROM_EMAIL}>`,
     to: LAGER_EMAIL,
-    subject,
+    subject: subjectLine,
     text,
   });
 
@@ -114,7 +117,7 @@ async function addZendeskComment(ticketId: number, comment: string): Promise<voi
 export async function POST(request: NextRequest) {
   try {
     const body: WebhookBody = await request.json();
-    const { ticket_id, comment = '', customer_email, customer_name = 'Unbekannt', order_number = 'Unbekannt' } = body;
+    const { ticket_id, comment = '', customer_email, customer_name = 'Unbekannt', order_number = 'Unbekannt', subject = 'Kein Betreff angegeben' } = body;
 
     if (!ticket_id || !comment.trim()) {
       return NextResponse.json({ error: 'Ticket ID und Kommentar sind erforderlich' }, { status: 400 });
@@ -125,7 +128,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, intent: 'keine' });
     }
 
-    await sendLagerEmail(intent.intent, customer_name, order_number, comment);
+    await sendLagerEmail(intent.intent, customer_name, order_number, comment, subject);
     await addZendeskComment(ticket_id, `🤖 Automatisch erkannt: ${intent.intent === 'stornierung' ? 'Stornierung' : 'Adressänderung'} angefragt.`);
 
     return NextResponse.json({ success: true, intent: intent.intent });
