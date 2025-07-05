@@ -29,7 +29,7 @@ interface OpenAIResponse {
 async function getRequester(requesterId: string) {
   const res = await fetch(`https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/users/${requesterId}.json`, {
     headers: {
-      Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}:${ZENDESK_TOKEN}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}/token:${ZENDESK_TOKEN}`).toString('base64')}`,
     },
   });
 
