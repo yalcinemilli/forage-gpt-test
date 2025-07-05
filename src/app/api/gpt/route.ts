@@ -81,7 +81,7 @@ Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
       );
     }
 
-    const data: OpenAIResponse = await response.json();
+    const data: OpenAIResponse = await response;
     const generatedResponse = data.choices[0]?.message?.content;
 
     if (!generatedResponse) {

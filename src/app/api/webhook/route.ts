@@ -74,7 +74,7 @@ Nachricht: ${comment.trim().replace(/\s+/g, ' ')}`;
 
 
     if (!response.ok) throw new Error(`OpenAI Fehler: ${response.status}`);
-    const data: OpenAIResponse = await response.json();
+    const data: OpenAIResponse = await response;
     try {
         const raw = data.choices[0].message.content.trim();
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
