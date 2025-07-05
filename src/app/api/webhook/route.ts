@@ -145,18 +145,25 @@ Dein FORÀGE System`;
 }
 
 async function addZendeskComment(ticketId: number, comment: string): Promise<void> {
-  await fetch(`https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}.json`, {
-    method: 'PUT',
+  const url = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}/comments.json`;
+
+  const res = await fetch(url, {
+    method: 'POST',
     headers: {
-      Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}:${ZENDESK_TOKEN}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}/token:${ZENDESK_TOKEN}`).toString('base64')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      ticket: {
-        comment: { body: comment, public: false },
-      },
+      body: comment,
+      public: false,
     }),
   });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('❌ Fehler beim Hinzufügen des internen Kommentars:', res.status, text);
+    throw new Error('Kommentar konnte nicht hinzugefügt werden');
+  }
 }
 
 export async function POST(request: NextRequest) {
