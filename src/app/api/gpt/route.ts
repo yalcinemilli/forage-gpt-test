@@ -2,14 +2,6 @@ import { chatgptRequest } from '@/app/lib/openai';
 import { NextRequest, NextResponse } from 'next/server';
 
 
-interface OpenAIResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
 const systemPrompt = `
 Du bist ein professioneller Kundenservice-Mitarbeiter von Foràge Clothing. Foràge ist eine Modemarke für Männer zwischen 25 und 35 Jahren. Gegründet von Daniel Fuchs (magic_fox) und Kosta Williams (kosta_williams), zwei der ersten deutschen Mode-Influencer. Die Marke steht für hochwertige Essentials, minimalistische Ästhetik, neutrale Farben, die untereinander kombinierbar sind, und einen zeitlosen Stil mit Understatement. Foràge richtet sich an Männer, die mit leiser Eleganz überzeugen wollen – durch Qualität, Stilgefühl und „quiet confidence". 
 
@@ -72,17 +64,15 @@ Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
 
 
     const response = await chatgptRequest(enhancedSystemPrompt, userpromt);
-
-    if (!response || !response.ok) {
-      const errorData = response;
+ 
+    if (!response) {
       return NextResponse.json(
-        { error: 'Fehler bei der OpenAI-Anfrage', details: errorData },
-        { status: response?.status ?? 500 }
+        { error: 'Keine Antwort von OpenAI erhalten' },
+        { status: 500 }
       );
     }
 
-    const data: OpenAIResponse = await response.json();
-    const generatedResponse = data.choices[0]?.message?.content;
+    const generatedResponse = response.choices[0]?.message?.content;
 
     if (!generatedResponse) {
       return NextResponse.json(

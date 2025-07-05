@@ -18,14 +18,6 @@ interface ZendeskWebhook {
     };
 }
 
-interface OpenAIResponse {
-    choices: Array<{
-        message: {
-            content: string;
-        };
-    }>;
-}
-
 async function getRequester(requesterId: string) {
     const res = await fetch(`https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/users/${requesterId}.json`, {
         headers: {
@@ -72,10 +64,12 @@ Nachricht: ${comment.trim().replace(/\s+/g, ' ')}`;
 
     const response = await chatgptRequest(systempromt, userpromt);
 
-    if (!response || !response.ok) throw new Error(`OpenAI Fehler: ${response}`);
-    const data: OpenAIResponse = await response.json();
+    if (!response) {
+      return { intent: 'keine', raw_response: 'Keine Antwort von OpenAI erhalten' };
+    }
+
     try {
-        const raw = data.choices[0].message.content.trim();
+        const raw = response.choices[0]?.message?.content;
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (!jsonMatch) return { intent: 'keine', raw_response: raw };
 

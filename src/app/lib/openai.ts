@@ -1,4 +1,13 @@
 // src/app/lib/openai.ts
+
+interface OpenAIResponse {
+    choices: Array<{
+        message: {
+            content: string;
+        };
+    }>;
+}
+
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export async function chatgptRequest(systempromt: string, userpromt: string,) {
@@ -34,7 +43,7 @@ export async function chatgptRequest(systempromt: string, userpromt: string,) {
             throw new Error(`OpenAI API Fehler: ${response.status}`);
         }
 
-        const data = await response;
+        const data: OpenAIResponse = await response.json();
         return data;
 
     } catch (error) {
