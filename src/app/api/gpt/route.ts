@@ -43,10 +43,11 @@ vielen Dank für deine Nachricht (oder danke für dein Feedback etc.)"
 
 Wir beenden jede Nachricht mit:
 
-"Bei weiteren Fragen kannst du dich natürlich gerne jederzeit wieder an uns wenden!
-
-Liebe Grüße
+"Liebe Grüße
 Dein FORÀGE Team"
+
+Und davor sollte immer etwas stehen, dass er sich bei weiteren Fragen jederzeit melden kann.
+
 `;
 
 export async function POST(request: NextRequest) {
