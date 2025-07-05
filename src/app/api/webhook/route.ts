@@ -145,17 +145,22 @@ Dein FORÀGE System`;
 }
 
 async function addZendeskComment(ticketId: number, comment: string): Promise<void> {
-  const url = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}/comments.json`;
+  const url = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/tickets/${ticketId}.json`;
 
   const res = await fetch(url, {
-    method: 'POST',
+    method: 'PUT',
     headers: {
       Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}/token:${ZENDESK_TOKEN}`).toString('base64')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      body: comment,
-      public: false,
+      ticket: {
+        comment: {
+          body: comment,
+          public: false,
+        },
+        status: 'open',
+      },
     }),
   });
 
