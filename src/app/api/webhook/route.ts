@@ -26,7 +26,27 @@ interface OpenAIResponse {
   }>;
 }
 
-async function analyzeIntent(comment: string, subject: string): Promise<{ intent: 'stornierung' | 'adressänderung' | 'keine'; order_number?: string } | null> {
+async function getRequester(requesterId: string) {
+  const res = await fetch(`https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/users/${requesterId}.json`, {
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${ZENDESK_EMAIL}:${ZENDESK_TOKEN}`).toString('base64')}`,
+    },
+  });
+
+  if (!res.ok) throw new Error('Fehler beim Abruf der Requester-Daten');
+
+  const data = await res.json();
+  return {
+    name: data.user.name,
+    email: data.user.email,
+  };
+}
+
+async function analyzeIntent(comment: string, subject: string): Promise<{
+  intent: 'stornierung' | 'adressänderung' | 'keine';
+  order_number?: string;
+  raw_response?: string;
+} | null> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -59,9 +79,9 @@ Antworte **ausschließlich** im folgenden JSON-Format:
         },
         {
           role: 'user',
-          content: `Betreff: ${subject}
+          content: `Betreff: ${subject.trim().replace(/\s+/g, ' ')}
 
-Nachricht: ${comment}`,
+Nachricht: ${comment.trim().replace(/\s+/g, ' ')}`,
         },
       ],
       temperature: 0.4,
@@ -71,13 +91,24 @@ Nachricht: ${comment}`,
   if (!response.ok) throw new Error(`OpenAI Fehler: ${response.status}`);
   const data: OpenAIResponse = await response.json();
   try {
-    return JSON.parse(data.choices[0].message.content.trim());
+    const raw = data.choices[0].message.content.trim();
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return { intent: 'keine', raw_response: raw };
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return { ...parsed, raw_response: raw };
+    } catch (e) {
+      console.error('❌ JSON parse error', e, 'Antwort war:', raw);
+      return { intent: 'keine', raw_response: raw };
+    }
   } catch {
     return null;
   }
 }
 
 async function sendLagerEmail(type: 'stornierung' | 'adressänderung', name: string, order: string, comment: string, subject: string, email: string) {
+  
   const subjectLine = type === 'stornierung' ? `Stornierung: Bestellung ${order}` : `Adressänderung: Bestellung ${order}`;
   const text = `Hallo Lager-Team,
 
@@ -135,24 +166,41 @@ export async function POST(request: NextRequest) {
     const subject = payload.detail?.subject || 'Kein Betreff angegeben';
     const comment = payload.detail?.description || '';
 
-    if (!ticket_id || !comment.trim()) {
-      return NextResponse.json({ error: 'Ticket ID und Kommentar sind erforderlich' }, { status: 400 });
+    if (!ticket_id || !comment.trim() || !payload.detail.requester_id) {
+      return NextResponse.json({ error: 'Ticket ID, Kommentar und Requester ID sind erforderlich' }, { status: 400 });
     }
 
+    const { name, email } = await getRequester(payload.detail.requester_id);
+
     const analysis = await analyzeIntent(comment, subject);
+
     if (!analysis || analysis.intent === 'keine') {
-      return NextResponse.json({ success: true, intent: 'keine' });
+      return NextResponse.json(
+        { success: true, 
+          intent: 'keine', 
+          debug: {
+            subject,
+            comment,
+            name,
+            email,
+            requester_id: payload.detail.requester_id,
+            openai_response: analysis?.raw_response || 'Keine Antwort',
+          },
+        }
+      );
     }
 
     const resolvedOrderNumber = analysis.order_number || 'Unbekannt';
 
+
+    
     await sendLagerEmail(
       analysis.intent,
-      'Unbekannt', // Kundenname aus Webhook aktuell nicht verfügbar
+      name,
       resolvedOrderNumber,
       comment,
       subject,
-      'unbekannt@forage-clothing.com' // Kunden-E-Mail aus Webhook aktuell nicht verfügbar
+      email
     );
 
     const ticketNote = analysis.intent === 'stornierung'
