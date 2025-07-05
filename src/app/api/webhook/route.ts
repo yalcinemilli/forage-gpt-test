@@ -110,7 +110,7 @@ Nachricht: ${comment.trim().replace(/\s+/g, ' ')}`,
 async function sendLagerEmail(type: 'stornierung' | 'adressänderung', name: string, order: string, comment: string, subject: string, email: string) {
   
   const subjectLine = type === 'stornierung' ? `Stornierung: Bestellung ${order}` : `Adressänderung: Bestellung ${order}`;
-  const text = `Hallo Lager-Team,
+  const text = `Hallo Team,
 
 Der Kunde ${name} hat eine ${type === 'stornierung' ? 'Stornierung' : 'Adressänderung'} angefragt.
 
@@ -120,10 +120,12 @@ Kunden-E-Mail: ${email}
 Kommentar:
 ${comment}
 
-Bitte entsprechend bearbeiten.
+Könntet ihr bitte prüfen, ob dies noch möglich ist? 
+
+Vielen herzlichen Dank!
 
 Liebe Grüße
-Dein FORÀGE System`;
+FORÀGE Team`;
 
   const body = new URLSearchParams({
     from: `FORÀGE Support <${FROM_EMAIL}>`,
