@@ -1,9 +1,6 @@
+import { chatgptRequest } from '@/app/lib/openai';
 import { NextRequest, NextResponse } from 'next/server';
 
-interface OpenAIMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
 
 interface OpenAIResponse {
   choices: Array<{
@@ -61,15 +58,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'OpenAI API Key nicht konfiguriert' },
-        { status: 500 }
-      );
-    }
-
     // Erstelle eine personalisierte Systemnachricht
     const enhancedSystemPrompt = `${systemPrompt}
 
@@ -80,30 +68,10 @@ Zusätzliche Informationen für diese Anfrage:
 
 Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
 
-    const messages: OpenAIMessage[] = [
-      {
-        role: 'system',
-        content: enhancedSystemPrompt
-      },
-      {
-        role: 'user',
-        content: `Der Verlauf mit dem Kunden:\n\n${conversation}`
-      }
-    ];
+    const userpromt = `Der Verlauf mit dem Kunden:\n\n${conversation}`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages,
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
+
+    const response = await chatgptRequest(enhancedSystemPrompt, userpromt);
 
     if (!response.ok) {
       const errorData = await response.json();
