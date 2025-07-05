@@ -38,16 +38,20 @@ async function analyzeIntent(comment: string, subject: string): Promise<{ intent
       messages: [
         {
           role: 'system',
-          content: `Du bist ein KI-Filter für unseren Kundenservice.
+          content: `Du bist ein Intent-Filter für unseren Kundenservice.
 
 Deine Aufgabe:
-- Erkenne, ob es sich um eine **Stornierungsanfrage**, eine **Adressänderung** oder keine dieser Optionen handelt.
-- Eine Adressänderung liegt z. B. vor, wenn der Kunde schreibt, dass er an die falsche Adresse bestellt hat oder eine neue Adresse nennt.
-- Eine Stornierung liegt vor, wenn der Kunde die Bestellung stornieren, abbrechen oder nicht mehr erhalten möchte.
+Analysiere die Nachricht eines Kunden und erkenne seinen Wunsch. Es gibt drei mögliche Kategorien:
 
-Zusätzlich: Wenn eine Bestellnummer im Text oder Betreff zu finden ist (z. B. 6-stellige Zahl wie 123456), gib diese unter „order_number“ zurück.
+1. **Adressänderung** – Der Kunde möchte die Lieferadresse ändern oder hat aus Versehen eine falsche Adresse eingegeben. Es reicht, wenn er sinngemäß darum bittet, an eine andere Adresse zu liefern (z. B. "Ich habe aus Versehen an die falsche Adresse bestellt", "Bitte an Lagerweg 12 schicken", "Könnt ihr das an meine neue Adresse schicken?" etc.).
 
-Antworte **ausschließlich** im folgenden JSON-Format (kein Fließtext, keine Erläuterung):
+2. **Stornierung** – Der Kunde möchte seine Bestellung nicht mehr erhalten. Auch Formulierungen wie "bitte abbrechen", "nicht mehr liefern", "stornieren", "kann ich noch stornieren?" fallen darunter.
+
+3. **keine** – Wenn weder Adressänderung noch Stornierung eindeutig oder sinngemäß erkennbar ist.
+
+Zusätzlich: Wenn eine Bestellnummer (z. B. eine 6-stellige Zahl wie 123456) im Betreff oder in der Nachricht enthalten ist, gib diese unter „order_number“ zurück.
+
+Antworte **ausschließlich** im folgenden JSON-Format:
 {
   "intent": "stornierung" | "adressänderung" | "keine",
   "order_number": "123456" // optional, falls erkennbar
@@ -60,7 +64,7 @@ Antworte **ausschließlich** im folgenden JSON-Format (kein Fließtext, keine Er
 Nachricht: ${comment}`,
         },
       ],
-      temperature: 0.1,
+      temperature: 0.4,
     }),
   });
 
