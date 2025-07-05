@@ -1,7 +1,7 @@
 // src/app/lib/openai.ts
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export async function chatgptRequest(systempromt: string, userpromt: string,) {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
     if (!OPENAI_API_KEY) {
         throw new Error('OpenAI API Key ist nicht konfiguriert');
@@ -34,7 +34,7 @@ export async function chatgptRequest(systempromt: string, userpromt: string,) {
             throw new Error(`OpenAI API Fehler: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = await response;
         return data;
 
     } catch (error) {

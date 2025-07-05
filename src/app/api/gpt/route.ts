@@ -73,15 +73,15 @@ Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
 
     const response = await chatgptRequest(enhancedSystemPrompt, userpromt);
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    if (!response || !response.ok) {
+      const errorData = response;
       return NextResponse.json(
         { error: 'Fehler bei der OpenAI-Anfrage', details: errorData },
-        { status: response.status }
+        { status: response?.status ?? 500 }
       );
     }
 
-    const data: OpenAIResponse = await response;
+    const data: OpenAIResponse = await response.json();
     const generatedResponse = data.choices[0]?.message?.content;
 
     if (!generatedResponse) {

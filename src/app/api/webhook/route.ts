@@ -72,9 +72,8 @@ Nachricht: ${comment.trim().replace(/\s+/g, ' ')}`;
 
     const response = await chatgptRequest(systempromt, userpromt);
 
-
-    if (!response.ok) throw new Error(`OpenAI Fehler: ${response.status}`);
-    const data: OpenAIResponse = await response;
+    if (!response || !response.ok) throw new Error(`OpenAI Fehler: ${response}`);
+    const data: OpenAIResponse = await response.json();
     try {
         const raw = data.choices[0].message.content.trim();
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
