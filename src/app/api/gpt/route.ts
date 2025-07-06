@@ -1,17 +1,6 @@
+import { chatgptRequest } from '@/app/lib/openai';
 import { NextRequest, NextResponse } from 'next/server';
 
-interface OpenAIMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-interface OpenAIResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
 
 const systemPrompt = `
 Du bist ein professioneller Kundenservice-Mitarbeiter von Foràge Clothing. Foràge ist eine Modemarke für Männer zwischen 25 und 35 Jahren. Gegründet von Daniel Fuchs (magic_fox) und Kosta Williams (kosta_williams), zwei der ersten deutschen Mode-Influencer. Die Marke steht für hochwertige Essentials, minimalistische Ästhetik, neutrale Farben, die untereinander kombinierbar sind, und einen zeitlosen Stil mit Understatement. Foràge richtet sich an Männer, die mit leiser Eleganz überzeugen wollen – durch Qualität, Stilgefühl und „quiet confidence". 
@@ -61,15 +50,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'OpenAI API Key nicht konfiguriert' },
-        { status: 500 }
-      );
-    }
-
     // Erstelle eine personalisierte Systemnachricht
     const enhancedSystemPrompt = `${systemPrompt}
 
@@ -80,41 +60,19 @@ Zusätzliche Informationen für diese Anfrage:
 
 Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
 
-    const messages: OpenAIMessage[] = [
-      {
-        role: 'system',
-        content: enhancedSystemPrompt
-      },
-      {
-        role: 'user',
-        content: `Der Verlauf mit dem Kunden:\n\n${conversation}`
-      }
-    ];
+    const userpromt = `Der Verlauf mit dem Kunden:\n\n${conversation}`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages,
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
+    const response = await chatgptRequest(enhancedSystemPrompt, userpromt);
+ 
+    if (!response) {
       return NextResponse.json(
-        { error: 'Fehler bei der OpenAI-Anfrage', details: errorData },
-        { status: response.status }
+        { error: 'Keine Antwort von OpenAI erhalten' },
+        { status: 500 }
       );
     }
 
-    const data: OpenAIResponse = await response.json();
-    const generatedResponse = data.choices[0]?.message?.content;
+    const generatedResponse = response.choices[0]?.message?.content;
 
     if (!generatedResponse) {
       return NextResponse.json(
