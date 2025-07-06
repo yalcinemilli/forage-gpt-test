@@ -65,7 +65,7 @@ Analysiere die Nachricht eines Kunden und erkenne seinen Wunsch. Es gibt drei m�
 
 1. **Adressänderung** – Der Kunde möchte die Lieferadresse ändern oder hat aus Versehen eine falsche Adresse eingegeben. Es reicht, wenn er sinngemäß darum bittet, an eine andere Adresse zu liefern (z. B. "Ich habe aus Versehen an die falsche Adresse bestellt", "Bitte an Lagerweg 12 schicken", "Könnt ihr das an meine neue Adresse schicken?" etc.).
 
-2. **Stornierung** – Der Kunde möchte seine Bestellung nicht mehr erhalten. Auch Formulierungen wie "bitte abbrechen", "nicht mehr liefern", "stornieren", "kann ich noch stornieren?" fallen darunter.
+2. **Stornierung** – Der Kunde möchte seine Bestellung nicht mehr erhalten. Auch Formulierungen wie "bitte abbrechen", "nicht mehr liefern", "stornieren", "kann ich noch stornieren?" fallen darunter. Eine Stornierung bedeutet, dass der Kunde stornieren möchte, bevor das Paket verschickt wurde, d.h. wenn er erwähnt, dass er noch zurückschicken möchte, nach einem Retourenlabel/Rücksendelabel oder der Rücksendeadresse fragt, ist es **keine** Stornierung.
 
 3. **keine** – Wenn weder Adressänderung noch Stornierung eindeutig oder sinngemäß erkennbar ist.
 
