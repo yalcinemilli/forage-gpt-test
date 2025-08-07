@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Feedback from './component/feedback';
 
 // ZAF Client Types
 declare global {
@@ -53,6 +54,7 @@ export default function Home() {
   const [zafClient, setZafClient] = useState<ZAFClientInstance | null>(null);
   const [ticketSubject, setTicketSubject] = useState('');
   const [customerFirstName, setCustomerFirstName] = useState('');
+  const [suggestion, setSuggestion] = useState('');
 
   const initializeZAFClient = React.useCallback(() => {
     if (typeof window !== 'undefined' && window.ZAFClient) {
@@ -202,6 +204,41 @@ export default function Home() {
     .replace(/\n/g, '<br>');      // einfache Zeilenumbrüche
 }
 
+function addAnswerToZAF(answer: string): void {
+  if (zafClient) {
+    zafClient.invoke('ticket.comment.appendHtml', formatAsHtmlBreaks(answer))
+      .then(() => {
+        console.log('Antwort erfolgreich hinzugefügt');
+      })
+      .catch((error: Error) => {
+        console.error('Fehler beim Hinzufügen der Antwort:', error);
+        // Fallback: Kopiere die Antwort in die Zwischenablage
+        navigator.clipboard.writeText(answer)
+          .then(() => {
+            console.log('Antwort in die Zwischenablage kopiert');
+          })
+          .catch((clipboardError: Error) => {
+            console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
+          });
+      });
+  } else {
+    console.log('ZAF Client nicht verfügbar, kopiere Antwort in die Zwischenablage');
+    navigator.clipboard.writeText(answer)
+
+    .then(() => {
+        console.log('Antwort in die Zwischenablage kopiert');
+      })
+      .catch((clipboardError: Error) => {
+        console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
+      });
+  }
+}
+
+const handleFeedback = (finalSuggestion: string) => {
+ console.log('Feedback erhalten:', finalSuggestion);
+  addAnswerToZAF(finalSuggestion);
+}
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -227,34 +264,8 @@ export default function Home() {
         throw new Error(data.error || 'Fehler bei der Anfrage');
       }
 
+      setSuggestion(data.response);
       
-      // Wenn ZAF Client verbunden ist, füge die Antwort in das Zendesk Antwortfeld ein
-      if (zafClient) {
-        try {
-
-          await zafClient.invoke('ticket.comment.appendHtml', formatAsHtmlBreaks(data.response));
- 
-        } catch (zafError) {
-          console.error('Fehler beim Hinzufügen der Antwort:', zafError);
-          
-          // Fallback: Nur Zwischenablage
-          try {
-            await navigator.clipboard.writeText(data.response);
-          } catch (clipboardError) {
-            console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
-          }
-        }
-      } else {
-        console.log('ZAF Client nicht verfügbar');
-        // Kopiere zumindest in die Zwischenablage
-        try {
-          await navigator.clipboard.writeText(data.response);
-        } catch (clipboardError) {
-          console.error('Fehler beim Kopieren in die Zwischenablage:', clipboardError);
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }
@@ -283,6 +294,11 @@ export default function Home() {
         </button>
       </form>
 
+      {suggestion && (
+        <Feedback finalSuggestion={handleFeedback} suggestion={suggestion} customerConversation={customerConversation} userInstruction={userInstruction} />
+        )}
+
+        
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-red-700">

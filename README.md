@@ -1,77 +1,96 @@
-# Forage GPT
 
-A modern Next.js 15 application built with TypeScript, Tailwind CSS, and ESLint. This project uses the App Router and follows modern React best practices.
+# FORÀGE GPT – Dokumentation
 
-## 🚀 Features
+## Einleitung
 
-- **Next.js 15** with App Router
-- **TypeScript** for type safety
-- **Tailwind CSS** for modern styling
-- **ESLint** for code quality
-- **Server Components** and **Client Components**
-- **Source directory** structure (`src/`)
+FORÀGE GPT ist eine moderne Next.js 15 Anwendung für den KI-gestützten Kundenservice von FORÀGE Clothing. Sie integriert OpenAI GPT-4o, Supabase, Mailgun und die Zendesk Plattform, um automatisierte, markenkonforme Antworten und Workflows für Support-Tickets zu ermöglichen.
 
-## 🛠️ Getting Started
+## Features & Architektur
 
-First, run the development server:
+- **Next.js 15** mit App Router (Server & Client Components)
+- **TypeScript** für strikte Typisierung
+- **Tailwind CSS** für responsives, modernes Styling
+- **OpenAI GPT-4o** für KI-Antworten und semantische Suche
+- **Supabase** (PostgreSQL, Vektorsuche) für Logging & Feedback
+- **Mailgun** für automatisierte E-Mail-Benachrichtigungen
+- **Zendesk ZAF Client** für sichere Ticket-Integration
+- **Mehrstufige Antwort-Einfügung** (Composer API, DOM, Copy-Fallback)
+- **Umfassende Fehlerbehandlung, Logging & Security**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Setup & lokale Entwicklung
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Repository klonen**
+2. `.env.local` mit allen API-Keys und Secrets anlegen
+3. Abhängigkeiten installieren:
+   ```bash
+   npm install
+   ```
+4. Entwicklung starten:
+   ```bash
+   npm run dev
+   ```
+5. App unter [http://localhost:3000](http://localhost:3000) öffnen
 
-You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
-
-## � Zendesk Integration
-
-Diese App kann als Zendesk App integriert werden:
-
-### Setup für Zendesk
-1. **ZCLI installieren**: `npm install @zendesk/zcli -g`
-2. **App erstellen**: Kopiere die Dateien aus `public/` in einen neuen Ordner
-3. **App validieren**: `zcli apps:validate`
-4. **App deployen**: `zcli apps:create`
-
-### Dateien für Zendesk App
-- `public/manifest.json` - App Konfiguration
-- `public/zendesk-app.html` - App Interface
-- API Endpoint muss in den App-Einstellungen konfiguriert werden
-
-### �🔧 Available Scripts
-
-- `npm run dev` - Start the development server with Turbopack
-- `npm run build` - Build the application for production
-- `npm run start` - Start the production server
-- `npm run lint` - Run ESLint for code quality checks
-
-## 📁 Project Structure
+## Verzeichnisstruktur
 
 ```
 src/
-├── app/          # App Router pages and layouts
-├── components/   # Reusable React components
-├── lib/          # Utility functions and libraries
-└── utils/        # Helper functions
+├── app/          # App Router, Seiten, Layouts, API-Routen
+├── components/   # Wiederverwendbare React-Komponenten
+├── lib/          # Hilfsfunktionen & Integrationen (OpenAI, Supabase)
+└── utils/        # Weitere Hilfsfunktionen
+public/           # Statische Assets, Zendesk App HTML
 ```
 
-## 📚 Learn More
+## API-Routen & Integrationen
 
-To learn more about Next.js, take a look at the following resources:
+- **/api/gpt**: Generiert Antworten mit OpenAI GPT-4o, markenkonformer System-Prompt
+- **/api/generate**: Embedding-basierte Antwortgenerierung (semantische Suche)
+- **/api/webhook**: Webhook für Intent-Erkennung (Stornierung, Adressänderung, Retoure), Mailgun-Benachrichtigung
+- **/api/feedback**: Feedback-Speicherung in Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Integrationsmuster:**
+- ZAF Client initialisiert, lädt Ticketdaten, sendet an API, fügt Antwort per Composer API/DOM/Copy ein
+- Supabase für Logging, Feedback, Vektorsuche
+- Mailgun für automatisierte E-Mails an Logistik
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Styling & Komponenten
 
-## Deploy on Vercel
+- Tailwind CSS mit konsistentem Farbkonzept
+- Responsive Design & Dark Mode
+- Semantisches HTML, Container-Queries
+- Feedback-Komponente mit Parent-Child-Callback
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Sicherheit & Performance
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Strikte Typisierung, Input-Validierung, CORS
+- Environment-Variablen für alle Secrets
+- React.memo, Suspense, Next.js Image-Optimierung
+- Logging & Fehlerbehandlung in allen Integrationen
+
+## Deployment & Zendesk-Integration
+
+1. Produktion bauen:
+   ```bash
+   npm run build
+   ```
+2. `public/zendesk-app.html` in Zendesk hochladen
+3. API-Endpunkte in Zendesk-App konfigurieren
+4. In echter Zendesk-Umgebung testen
+
+## Testing & Best Practices
+
+- ZAF Client Integration in Zendesk testen
+- Postman für API-Tests nutzen
+- Webhook-Funktionalität mit echten Zendesk-Events validieren
+- Cross-Origin-Kommunikation und Fallbacks prüfen
+- Dokumentation und Typisierung aktuell halten
+
+---
+
+**Weitere Infos:**
+- [Next.js Doku](https://nextjs.org/docs)
+- [OpenAI API](https://platform.openai.com/docs)
+- [Supabase](https://supabase.com/docs)
+- [Mailgun](https://documentation.mailgun.com/)
+- [Zendesk Apps](https://developer.zendesk.com/)
