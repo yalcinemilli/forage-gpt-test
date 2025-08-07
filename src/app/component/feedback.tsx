@@ -12,6 +12,7 @@ interface FeedbackPayload {
     customerMessage: string;
     gptSuggestion: string;
     finalResponse: string;
+    userInstruction?: string;
     feedback: string;
 }
 
@@ -25,6 +26,7 @@ export default function Feedback({ finalSuggestion, customerConversation, userIn
             customerMessage: customerConversation,
             gptSuggestion: suggestion,
             finalResponse: editsuggestion,
+            userInstruction: userInstruction,
             feedback: selectedFeedback ?? ''
         };
 
