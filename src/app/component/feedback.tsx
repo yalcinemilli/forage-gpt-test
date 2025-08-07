@@ -27,9 +27,9 @@ export default function Feedback({ finalSuggestion, customerConversation, userIn
             gptSuggestion: suggestion,
             finalResponse: editsuggestion,
             userInstruction: userInstruction,
-            feedback: selectedFeedback ?? ''
+            feedback: feedback
         };
-
+        
         setSelectedFeedback(feedback);
         setIsSubmitting(true);
 

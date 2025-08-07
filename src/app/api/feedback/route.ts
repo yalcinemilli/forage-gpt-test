@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const { customerMessage, gptSuggestion, finalResponse, feedback } = body
 
     // Validierung der erforderlichen Felder
-    if (!customerMessage || !gptSuggestion || !finalResponse || !feedback) {
+    if (!customerMessage || !gptSuggestion || !finalResponse) {
       console.error('❌ Fehlende erforderliche Felder:', body)
       return NextResponse.json(
         { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, feedback' },
