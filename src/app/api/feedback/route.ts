@@ -34,13 +34,13 @@ interface FeedbackRequestBody {
 export async function POST(request: NextRequest) {
   try {
     const body: FeedbackRequestBody = await request.json()
-    const { customerMessage, gptSuggestion, finalResponse, userInstruction, feedback } = body
+    const { customerMessage, gptSuggestion, finalResponse, feedback } = body
 
     // Validierung der erforderlichen Felder
-    if (!customerMessage || !gptSuggestion || !finalResponse || !userInstruction || !feedback) {
+    if (!customerMessage || !gptSuggestion || !finalResponse || !feedback) {
       console.error('❌ Fehlende erforderliche Felder:', body)
       return NextResponse.json(
-        { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, userInstruction, feedback' },
+        { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, feedback' },
         { status: 400 }
       )
     }
