@@ -27,18 +27,19 @@ interface FeedbackRequestBody {
   customerMessage: string
   gptSuggestion: string
   finalResponse: string
+  userInstruction?: string;
   feedback: 'positive' | 'negative' | 'neutral'
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: FeedbackRequestBody = await request.json()
-    const { customerMessage, gptSuggestion, finalResponse, feedback } = body
+    const { customerMessage, gptSuggestion, finalResponse, userInstruction, feedback } = body
 
     // Validierung der erforderlichen Felder
-    if (!customerMessage || !gptSuggestion || !finalResponse || !feedback) {
+    if (!customerMessage || !gptSuggestion || !finalResponse || !userInstruction || !feedback) {
       return NextResponse.json(
-        { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, feedback' },
+        { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, userInstruction, feedback' },
         { status: 400 }
       )
     }
