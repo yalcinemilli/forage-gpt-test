@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Validierung der erforderlichen Felder
     if (!customerMessage || !gptSuggestion || !finalResponse || !userInstruction || !feedback) {
+      console.error('❌ Fehlende erforderliche Felder:', body)
       return NextResponse.json(
         { error: 'Alle Felder sind erforderlich: customerMessage, gptSuggestion, finalResponse, userInstruction, feedback' },
         { status: 400 }
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
     // Validierung des Feedback-Werts
     const validFeedback = ['positive', 'negative', 'neutral']
     if (!validFeedback.includes(feedback)) {
+      console.error('❌ Ungültiges Feedback:', feedback)
       return NextResponse.json(
         { error: 'Feedback muss eines der folgenden Werte sein: positive, negative, neutral' },
         { status: 400 }
