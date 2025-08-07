@@ -10,7 +10,7 @@
   "location": {
     "support": {
       "ticket_sidebar": {
-        "url": "https://forage-zendesk-chatgpt.vercel.app/",
+        "url": "https://forage-gpt-test.vercel.app",
         "flexible": true,
         "size": {
           "height": "700px"
@@ -24,6 +24,6 @@
   "signedUrls": false,
   "domainWhitelist": [
     "localhost:3000",
-    "https://forage-zendesk-chatgpt.vercel.app/"
+    "https://forage-gpt-test.vercel.app"
   ]
 }

@@ -19,7 +19,7 @@ interface FeedbackPayload {
 export default function Feedback({ finalSuggestion, customerConversation, userInstruction, suggestion }: FeedbackProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [selectedFeedback, setSelectedFeedback] = useState<'positive' | 'negative' | 'neutral'>()
-    const [editsuggestion, setEditSuggestion] = useState<string>('')
+    const [editsuggestion, setEditSuggestion] = useState<string>(suggestion);
 
     async function handleFeedback(feedback: 'positive' | 'negative' | 'neutral'): Promise<void> {
         const payload: FeedbackPayload = {
