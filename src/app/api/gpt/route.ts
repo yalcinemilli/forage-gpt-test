@@ -1,5 +1,13 @@
-import { chatgptRequest } from '@/app/lib/openai';
+import { chatgptRequest, createEmbedding } from '@/app/lib/openai';
+import { supabase } from '@/app/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
+
+
+interface SimilarCase {
+  question: string
+  answer: string
+  similarity?: number
+}
 
 
 const systemPrompt = `
@@ -19,7 +27,7 @@ Deine Antwort muss immer:
 – vollständig sein
 – inklusive Anrede am Anfang
 – kommentarlos ausgegeben werden, d. h. kein Einleitungssatz, kein Erklärtext, keine System-Hinweise – der Text muss 1:1 kopierbar und absendbar an den Kunden sein.
-– formatiere die Antwort mit Absätzen, d. h. setze sinnvolle Zeilenumbrüche zwischen Abschnitten (verwende doppelte Zeilenumbrüche, keine einzelnen)
+– formatiere die Antwort mit Absätzen, d.h. setze sinnvolle Zeilenumbrüche zwischen Abschnitten (verwende doppelte Zeilenumbrüche, keine einzelnen)
 - in der "wir" form sein, wir treten immer als Team auf, nicht als Einzelperson -> wir haben das Problem gesehen, wir haben das geprüft, wir haben eine Lösung gefunden etc.
 
 Wenn ein Artikel defekt ist, dann fordern wir diesen nicht zurück. Erwähnen das aber auch nicht explizit. Wir nennen nur Lösungen und bieten keinen kostenlosen Rückversand in einem solchen Fall ein.
@@ -50,6 +58,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const embedding = await createEmbedding(conversation)
+
+    console.log('✅ Embedding erstellt, suche ähnliche Fälle...')
+
+    // Ähnliche Fälle suchen
+    const { data: similarCases, error: supabaseError } = await supabase.rpc('match_cases', {
+      query_embedding: embedding,
+      match_threshold: 0.75,
+      match_count: 5,
+    })
+
+    if (supabaseError) {
+      console.error('❌ Supabase RPC Fehler:', supabaseError)
+      throw new Error(`Fehler beim Suchen ähnlicher Fälle: ${supabaseError.message}`)
+    }
+    const cases = similarCases as SimilarCase[]
+    console.log(`📋 ${cases?.length || 0} ähnliche Fälle gefunden`)
+
+    // Kontext aus ähnlichen Fällen bauen
+    const examples = cases
+      ?.map((c: SimilarCase) => `Früherer Fall: ${c.question}\nAntwort: ${c.answer}`)
+      .join('\n\n') || ''
+
+
     // Erstelle eine personalisierte Systemnachricht
     const enhancedSystemPrompt = `${systemPrompt}
 
@@ -60,11 +92,13 @@ Zusätzliche Informationen für diese Anfrage:
 
 Berücksichtige diese Informationen bei der Erstellung der Antwort.`;
 
-    const userpromt = `Der Verlauf mit dem Kunden:\n\n${conversation}`
+    const userpromt = examples
+      ? 'Hier sind einige frühere Fälle, die dir helfen könnten:\n\n' + examples + '\n\n' + `Der Verlauf mit dem Kunden:\n\n${conversation}`
+      : `Hier ist der Verlauf mit dem Kunden:\n\n${conversation}`;
 
 
     const response = await chatgptRequest(enhancedSystemPrompt, userpromt);
- 
+
     if (!response) {
       return NextResponse.json(
         { error: 'Keine Antwort von OpenAI erhalten' },

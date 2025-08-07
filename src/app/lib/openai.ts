@@ -1,5 +1,7 @@
 // src/app/lib/openai.ts
 
+import { OpenAI } from "openai";
+
 interface OpenAIResponse {
     choices: Array<{
         message: {
@@ -10,7 +12,24 @@ interface OpenAIResponse {
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-export async function chatgptRequest(systempromt: string, userpromt: string,) {
+const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+});
+
+
+export async function createEmbedding(customerMessage: string) {
+ const embeddingResp = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: customerMessage,
+    })
+
+    console.log('✅ Embedding erstellt, suche ähnliche Fälle...')
+
+    return embeddingResp.data[0].embedding;
+    
+}
+
+export async function chatgptRequest(systempromt: string, userpromt: string) {
 
     if (!OPENAI_API_KEY) {
         throw new Error('OpenAI API Key ist nicht konfiguriert');

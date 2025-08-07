@@ -1,12 +1,7 @@
-import { chatgptRequest } from '@/app/lib/openai'
+import { chatgptRequest, createEmbedding } from '@/app/lib/openai'
 import { supabase } from '@/app/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
-import { OpenAI } from 'openai'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 interface GenerateRequestBody {
   customerMessage: string
@@ -44,13 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateR
 
     console.log('🔍 Generiere Embedding für Nachricht:', customerMessage.substring(0, 100) + '...')
 
-    // Embedding erstellen
-    const embeddingResp = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: customerMessage,
-    })
-
-    const embedding = embeddingResp.data[0].embedding
+    const embedding = await createEmbedding(customerMessage)
 
     console.log('✅ Embedding erstellt, suche ähnliche Fälle...')
 

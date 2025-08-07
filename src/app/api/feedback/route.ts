@@ -1,3 +1,4 @@
+import { createEmbedding } from '@/app/lib/openai'
 import { supabase } from '@/app/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -55,6 +56,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const embedding = await createEmbedding(finalResponse)
+
     // Daten in Supabase einfügen
     const { error } = await supabase
       .from('cases')
@@ -64,6 +67,7 @@ export async function POST(request: NextRequest) {
           gpt_suggestion: gptSuggestion,
           final_response: finalResponse,
           feedback: feedback,
+          embedding: embedding,
           created_at: new Date().toISOString()
         }
       ])
